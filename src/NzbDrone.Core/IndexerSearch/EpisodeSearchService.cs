@@ -113,6 +113,15 @@ namespace NzbDrone.Core.IndexerSearch
 
         public void Handle(EpisodeInfoRefreshedEvent message)
         {
+            //TODO: This should be triggered off of a disk scan, that follows after the refresh so existing files on disk are counted
+            return;
+
+            if (!message.Series.Monitored)
+            {
+                _logger.Debug("Series is not monitored");
+                return;
+            }
+
             if (message.Updated.Empty() || message.Series.Added.InLastDays(1))
             {
                 _logger.Debug("Appears to be a new series, skipping search.");
@@ -141,6 +150,12 @@ namespace NzbDrone.Core.IndexerSearch
 
             foreach (var episode in previouslyAired)
             {
+                if (!episode.Monitored)
+                {
+                    _logger.Debug("Episode is not monitored");
+                    continue;
+                }
+
                 var decisions = _nzbSearchService.EpisodeSearch(episode);
                 var processed = _processDownloadDecisions.ProcessDecisions(decisions);
 

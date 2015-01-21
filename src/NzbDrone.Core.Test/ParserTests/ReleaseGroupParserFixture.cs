@@ -25,6 +25,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Simpsons 10x11 - Wild Barts Cant Be Broken [rl].avi", null)]
         [TestCase("[ www.Torrenting.com ] - Revenge.S03E14.720p.HDTV.X264-DIMENSION", "DIMENSION")]
         [TestCase("Seed S02E09 HDTV x264-2HD [eztv]-[rarbg.com]", "2HD")]
+        [TestCase("7s-atlantis-s02e01-720p.mkv", null)]
         //[TestCase("", "")]
         public void should_parse_release_group(string title, string expected)
         {
@@ -44,6 +45,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Blue.Bloods.S05E11.720p.HDTV.X264-DIMENSION-NZBgeek", "DIMENSION")]
         [TestCase("Lost.S04E04.720p.BluRay.x264-xHD-1", "xHD")]
         [TestCase("Blue.Bloods.S05E11.720p.HDTV.X264-DIMENSION-1", "DIMENSION")]
+        [TestCase("saturday.night.live.s40e11.kevin.hart_sia.720p.hdtv.x264-w4f-sample.mkv", "w4f")]
         public void should_not_include_repost_in_release_group(string title, string expected)
         {
             Parser.Parser.ParseReleaseGroup(title).Should().Be(expected);

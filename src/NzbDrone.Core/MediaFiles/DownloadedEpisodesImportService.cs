@@ -15,8 +15,7 @@ namespace NzbDrone.Core.MediaFiles
     public interface IDownloadedEpisodesImportService
     {
         List<ImportResult> ProcessRootFolder(DirectoryInfo directoryInfo);
-        List<ImportResult> ProcessFolder(DirectoryInfo directoryInfo, DownloadClientItem downloadClientItem = null);
-        List<ImportResult> ProcessPath(string path, DownloadClientItem downloadClientItem = null);
+        List<ImportResult> ProcessPath(string path, Series series = null, DownloadClientItem downloadClientItem = null);
     }
 
     public class DownloadedEpisodesImportService : IDownloadedEpisodesImportService
@@ -31,13 +30,13 @@ namespace NzbDrone.Core.MediaFiles
         private readonly Logger _logger;
 
         public DownloadedEpisodesImportService(IDiskProvider diskProvider,
-            IDiskScanService diskScanService,
-            ISeriesService seriesService,
-            IParsingService parsingService,
-            IMakeImportDecision importDecisionMaker,
-            IImportApprovedEpisodes importApprovedEpisodes,
-            ISampleService sampleService,
-            Logger logger)
+                                               IDiskScanService diskScanService,
+                                               ISeriesService seriesService,
+                                               IParsingService parsingService,
+                                               IMakeImportDecision importDecisionMaker,
+                                               IImportApprovedEpisodes importApprovedEpisodes,
+                                               ISampleService sampleService,
+                                               Logger logger)
         {
             _diskProvider = diskProvider;
             _diskScanService = diskScanService;
@@ -68,7 +67,27 @@ namespace NzbDrone.Core.MediaFiles
             return results;
         }
 
-        public List<ImportResult> ProcessFolder(DirectoryInfo directoryInfo, DownloadClientItem downloadClientItem = null)
+        public List<ImportResult> ProcessPath(string path, Series series = null, DownloadClientItem downloadClientItem = null)
+        {
+            if (_diskProvider.FolderExists(path))
+            {
+                if (series == null)
+                {
+                    return ProcessFolder(new DirectoryInfo(path), downloadClientItem);
+                }
+
+                return ProcessFolder(new DirectoryInfo(path), series, downloadClientItem);
+            }
+
+            if (series == null)
+            {
+                return ProcessFile(new FileInfo(path), downloadClientItem);
+            }
+
+            return ProcessFile(new FileInfo(path), series, downloadClientItem);
+        }
+
+        private List<ImportResult> ProcessFolder(DirectoryInfo directoryInfo, DownloadClientItem downloadClientItem = null)
         {
             var cleanedUpName = GetCleanedUpFolderName(directoryInfo.Name);
             var series = _parsingService.GetSeries(cleanedUpName);
@@ -87,7 +106,7 @@ namespace NzbDrone.Core.MediaFiles
         }
 
         private List<ImportResult> ProcessFolder(DirectoryInfo directoryInfo, Series series,
-                                                DownloadClientItem downloadClientItem = null)
+                                                 DownloadClientItem downloadClientItem = null)
         {
             if (_seriesService.SeriesPathExists(directoryInfo.FullName))
             {
@@ -128,7 +147,7 @@ namespace NzbDrone.Core.MediaFiles
             return importResults;
         }
 
-        public List<ImportResult> ProcessFile(FileInfo fileInfo, DownloadClientItem downloadClientItem = null)
+        private List<ImportResult> ProcessFile(FileInfo fileInfo, DownloadClientItem downloadClientItem = null)
         {
             var series = _parsingService.GetSeries(Path.GetFileNameWithoutExtension(fileInfo.Name));
 
@@ -162,16 +181,6 @@ namespace NzbDrone.Core.MediaFiles
             return _importApprovedEpisodes.Import(decisions, true, downloadClientItem);
         }
 
-        public List<ImportResult> ProcessPath(string path, DownloadClientItem downloadClientItem = null)
-        {
-            if (_diskProvider.FolderExists(path))
-            {
-                return ProcessFolder(new DirectoryInfo(path), downloadClientItem);
-            }
-        
-            return ProcessFile(new FileInfo(path), downloadClientItem);
-        }
-
         private string GetCleanedUpFolderName(string folder)
         {
             folder = folder.Replace("_UNPACK_", "")
@@ -183,6 +192,7 @@ namespace NzbDrone.Core.MediaFiles
         private bool ShouldDeleteFolder(DirectoryInfo directoryInfo, Series series)
         {
             var videoFiles = _diskScanService.GetVideoFiles(directoryInfo.FullName);
+            var rarFiles = _diskProvider.GetFiles(directoryInfo.FullName, SearchOption.AllDirectories).Where(f => Path.GetExtension(f) == ".rar");
 
             foreach (var videoFile in videoFiles)
             {
@@ -203,6 +213,12 @@ namespace NzbDrone.Core.MediaFiles
                     _logger.Warn("Non-sample file detected: [{0}]", videoFile);
                     return false;
                 }
+            }
+
+            if (rarFiles.Any(f => _diskProvider.GetFileSize(f) > 10.Megabytes()))
+            {
+                _logger.Warn("RAR file detected, will require manual cleanup");
+                return false;
             }
 
             return true;
