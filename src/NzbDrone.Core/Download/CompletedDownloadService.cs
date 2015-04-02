@@ -100,6 +100,7 @@ namespace NzbDrone.Core.Download
 
             if (importResults.Count(c => c.Result == ImportResultType.Imported) >= trackedDownload.RemoteEpisode.Episodes.Count)
             {
+                
                 trackedDownload.State = TrackedDownloadStage.Imported;
                 _eventAggregator.PublishEvent(new DownloadCompletedEvent(trackedDownload));
                 return;

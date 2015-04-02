@@ -19,6 +19,7 @@ using NzbDrone.Core.Metadata.Files;
 using NzbDrone.Core.Profiles.Delay;
 using NzbDrone.Core.RemotePathMappings;
 using NzbDrone.Core.Notifications;
+using NzbDrone.Core.Notifications.UnWatched;
 using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
@@ -101,6 +102,7 @@ namespace NzbDrone.Core.Datastore
             Mapper.Entity<Restriction>().RegisterModel("Restrictions");
 
             Mapper.Entity<DelayProfile>().RegisterModel("DelayProfiles");
+            Mapper.Entity<UnWatchedResult>().RegisterModel("UnWatched");
         }
 
         private static void RegisterMappers()
