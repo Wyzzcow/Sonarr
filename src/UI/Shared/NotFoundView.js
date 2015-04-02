@@ -1,11 +1,5 @@
-﻿'use strict';
-define(
-    [
-        'marionette'
-    ], function (Marionette) {
-        return Marionette.ItemView.extend({
-            template: 'Shared/NotFoundViewTemplate'
-        });
-    });
+var Marionette = require('marionette');
 
-
+module.exports = Marionette.ItemView.extend({
+    template : 'Shared/NotFoundViewTemplate'
+});

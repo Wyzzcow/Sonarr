@@ -1,19 +1,15 @@
-﻿'use strict';
-define(
-    [
-        'backbone.pageable',
-        'System/Backup/BackupModel'
-    ], function (PageableCollection, BackupModel) {
-        return  PageableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/system/backup',
-            model: BackupModel,
+var PageableCollection = require('backbone.pageable');
+var BackupModel = require('./BackupModel');
 
-            state: {
-                sortKey  : 'time',
-                order    : 1,
-                pageSize : 100000
-            },
+module.exports = PageableCollection.extend({
+    url   : window.NzbDrone.ApiRoot + '/system/backup',
+    model : BackupModel,
 
-            mode: 'client'
-        });
-    });
+    state : {
+        sortKey  : 'time',
+        order    : 1,
+        pageSize : 100000
+    },
+
+    mode : 'client'
+});

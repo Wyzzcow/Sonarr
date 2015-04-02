@@ -1,18 +1,13 @@
-﻿'use strict';
+var Marionette = require('marionette');
 
-define([
-    'marionette'
-], function (Marionette) {
+module.exports = Marionette.CompositeView.extend({
+    itemViewOptions : function() {
+        return {
+            targetCollection : this.targetCollection || this.options.targetCollection
+        };
+    },
 
-    return Marionette.CompositeView.extend({
-        itemViewOptions  : function () {
-            return {
-                targetCollection: this.targetCollection || this.options.targetCollection
-            };
-        },
-
-        initialize: function (options) {
-            this.targetCollection = options.targetCollection;
-        }
-    });
+    initialize : function(options) {
+        this.targetCollection = options.targetCollection;
+    }
 });

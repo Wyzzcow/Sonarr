@@ -1,42 +1,30 @@
-'use strict';
-define(
-    [
-        'Cells/NzbDroneCell',
-        'Commands/CommandController'
-    ], function (NzbDroneCell, CommandController) {
-        return NzbDroneCell.extend({
+var NzbDroneCell = require('../../Cells/NzbDroneCell');
+var CommandController = require('../../Commands/CommandController');
 
-            className: 'execute-task-cell',
+module.exports = NzbDroneCell.extend({
+    className : 'execute-task-cell',
 
-            events: {
-                'click .x-execute' : '_executeTask'
-            },
+    events : {
+        'click .x-execute' : '_executeTask'
+    },
 
-            render: function () {
+    render : function() {
+        this.$el.empty();
 
-                this.$el.empty();
+        var name = this.model.get('name');
+        var task = this.model.get('taskName');
 
-                var name = this.model.get('name');
-                var task = this.model.get('taskName');
+        this.$el.html('<i class="icon-sonarr-refresh icon-can-spin x-execute" title="Execute {0}"></i>'.format(name));
 
-                this.$el.html(
-                    '<i class="icon-refresh icon-can-spin x-execute" title="Execute {0}"></i>'.format(name)
-                );
-
-                CommandController.bindToCommand({
-                    element: this.$el.find('.x-execute'),
-                    command: {
-                        name : task
-                    }
-                });
-
-                return this;
-            },
-
-            _executeTask: function () {
-                CommandController.Execute(this.model.get('taskName'), {
-                    name : this.model.get('taskName')
-                });
-            }
+        CommandController.bindToCommand({
+            element : this.$el.find('.x-execute'),
+            command : { name : task }
         });
-    });
+
+        return this;
+    },
+
+    _executeTask : function() {
+        CommandController.Execute(this.model.get('taskName'), { name : this.model.get('taskName') });
+    }
+});

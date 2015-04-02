@@ -19,6 +19,7 @@ namespace NzbDrone.Common.Disk
         bool FolderExists(string path);
         bool FileExists(string path);
         bool FileExists(string path, StringComparison stringComparison);
+        bool FolderWritable(string path);
         string[] GetDirectories(string path);
         string[] GetFiles(string path, SearchOption searchOption);
         long GetFolderSize(string path);
@@ -45,7 +46,8 @@ namespace NzbDrone.Common.Disk
         void EmptyFolder(string path);
         string[] GetFixedDrives();
         string GetVolumeLabel(string path);
-        FileStream StreamFile(string path);
+        FileStream OpenReadStream(string path);
+        FileStream OpenWriteStream(string path);
         List<DriveInfo> GetDrives();
         List<DirectoryInfo> GetDirectoryInfos(string path);
         List<FileInfo> GetFileInfos(string path);

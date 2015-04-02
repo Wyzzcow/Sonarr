@@ -19,6 +19,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.TransmissionTests
         protected TransmissionTorrent _downloading;
         protected TransmissionTorrent _failed;
         protected TransmissionTorrent _completed;
+        protected Dictionary<string, object> _transmissionConfigItems;
 
         [SetUp]
         public void Setup()
@@ -87,21 +88,21 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.TransmissionTests
                   .Setup(s => s.Get(It.IsAny<HttpRequest>()))
                   .Returns<HttpRequest>(r => new HttpResponse(r, new HttpHeader(), new Byte[0]));
 
-            var configItems = new Dictionary<String, Object>();
+            _transmissionConfigItems = new Dictionary<String, Object>();
 
-            configItems.Add("download-dir", @"C:/Downloads/Finished/transmission");
-            configItems.Add("incomplete-dir", null);
-            configItems.Add("incomplete-dir-enabled", false);
+            _transmissionConfigItems.Add("download-dir", @"C:/Downloads/Finished/transmission");
+            _transmissionConfigItems.Add("incomplete-dir", null);
+            _transmissionConfigItems.Add("incomplete-dir-enabled", false);
 
             Mocker.GetMock<ITransmissionProxy>()
                 .Setup(v => v.GetConfig(It.IsAny<TransmissionSettings>()))
-                .Returns(configItems);
+                .Returns(_transmissionConfigItems);
 
         }
 
         protected void GivenTvCategory()
         {
-            _settings.TvCategory = "nzbdrone";
+            _settings.TvCategory = "sonarr";
         }
 
         protected void GivenFailedDownload()
@@ -227,7 +228,25 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.TransmissionTests
             id.Should().NotBeNullOrEmpty();
 
             Mocker.GetMock<ITransmissionProxy>()
-                .Verify(v => v.AddTorrentFromData(It.IsAny<Byte[]>(), @"C:/Downloads/Finished/transmission/.nzbdrone", It.IsAny<TransmissionSettings>()), Times.Once());
+                .Verify(v => v.AddTorrentFromData(It.IsAny<Byte[]>(), @"C:/Downloads/Finished/transmission/sonarr", It.IsAny<TransmissionSettings>()), Times.Once());
+        }
+
+        [Test]
+        public void Download_with_category_should_not_have_double_slashes()
+        {
+            GivenTvCategory();
+            GivenSuccessfulDownload();
+
+            _transmissionConfigItems["download-dir"] += "/";
+
+            var remoteEpisode = CreateRemoteEpisode();
+
+            var id = Subject.Download(remoteEpisode);
+
+            id.Should().NotBeNullOrEmpty();
+
+            Mocker.GetMock<ITransmissionProxy>()
+                .Verify(v => v.AddTorrentFromData(It.IsAny<Byte[]>(), @"C:/Downloads/Finished/transmission/sonarr", It.IsAny<TransmissionSettings>()), Times.Once());
         }
 
         [TestCase("magnet:?xt=urn:btih:ZPBPA2P6ROZPKRHK44D5OW6NHXU5Z6KR&tr=udp", "CBC2F069FE8BB2F544EAE707D75BCD3DE9DCF951")]
@@ -308,7 +327,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.TransmissionTests
         {
             GivenTvCategory();
 
-            _downloading.DownloadDir = @"C:/Downloads/Finished/transmission/.nzbdrone";
+            _downloading.DownloadDir = @"C:/Downloads/Finished/transmission/sonarr";
 
             GivenTorrents(new List<TransmissionTorrent> 
                 {

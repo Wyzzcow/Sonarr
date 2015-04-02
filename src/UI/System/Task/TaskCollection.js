@@ -1,19 +1,15 @@
-﻿'use strict';
-define(
-    [
-        'backbone.pageable',
-        'System/Task/TaskModel'
-    ], function (PageableCollection, TaskModel) {
-        return  PageableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/system/task',
-            model: TaskModel,
+var PageableCollection = require('backbone.pageable');
+var TaskModel = require('./TaskModel');
 
-            state: {
-                sortKey  : 'name',
-                order    : -1,
-                pageSize : 100000
-            },
+module.exports = PageableCollection.extend({
+    url   : window.NzbDrone.ApiRoot + '/system/task',
+    model : TaskModel,
 
-            mode: 'client'
-        });
-    });
+    state : {
+        sortKey  : 'name',
+        order    : -1,
+        pageSize : 100000
+    },
+
+    mode : 'client'
+});

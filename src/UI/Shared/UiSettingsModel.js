@@ -1,34 +1,29 @@
-﻿﻿'use strict';
-define(
-    [
-        'backbone',
-        'api!config/ui'
-    ], function (Backbone, uiSettings) {
-        var UiSettings = Backbone.Model.extend({
+var Backbone = require('backbone');
+var ApiData = require('./ApiData');
 
-            url : window.NzbDrone.ApiRoot + '/config/ui',
+var UiSettings = Backbone.Model.extend({
+    url : window.NzbDrone.ApiRoot + '/config/ui',
 
-            shortDateTime : function (includeSeconds) {
-                return this.get('shortDateFormat') + ' ' + this.time(true, includeSeconds);
-            },
+    shortDateTime : function(includeSeconds) {
+        return this.get('shortDateFormat') + ' ' + this.time(true, includeSeconds);
+    },
 
-            longDateTime : function (includeSeconds) {
-                return this.get('longDateFormat') + ' ' + this.time(true, includeSeconds);
-            },
+    longDateTime : function(includeSeconds) {
+        return this.get('longDateFormat') + ' ' + this.time(true, includeSeconds);
+    },
 
-            time : function (includeMinuteZero, includeSeconds) {
-                if (includeSeconds) {
-                    return this.get('timeFormat').replace(/\(?\:mm\)?/, ':mm:ss');
-                }
+    time : function(includeMinuteZero, includeSeconds) {
+        if (includeSeconds) {
+            return this.get('timeFormat').replace(/\(?\:mm\)?/, ':mm:ss');
+        }
+        if (includeMinuteZero) {
+            return this.get('timeFormat').replace('(', '').replace(')', '');
+        }
 
-                if (includeMinuteZero) {
-                    return this.get('timeFormat').replace('(', '').replace(')', '');
-                }
+        return this.get('timeFormat').replace(/\(\:mm\)/, '');
+    }
+});
 
-                return this.get('timeFormat').replace(/\(\:mm\)/, '');
-            }
-        });
+var instance = new UiSettings(ApiData.get('config/ui'));
 
-        var instance = new UiSettings(uiSettings);
-        return instance;
-    });
+module.exports = instance;

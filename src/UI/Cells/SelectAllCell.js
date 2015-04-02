@@ -1,49 +1,45 @@
-'use strict';
-define(
-    [
-        'jquery',
-        'underscore',
-        'backgrid.selectall'
-    ], function ($, _, BackgridSelectAll) {
-        return BackgridSelectAll.extend({
+var $ = require('jquery');
+var _ = require('underscore');
+var BackgridSelectAll = require('backgrid.selectall');
 
-            enterEditMode: function (e) {
-                if (e.shiftKey && this.model.collection.lastToggled) {
-                    this._selectRange();
-                }
+module.exports = BackgridSelectAll.extend({
+    enterEditMode : function(e) {
+        var collection = this.column.get('sortedCollection') || this.model.collection;
 
-                var checked = $(e.target).prop('checked');
+        if (e.shiftKey && collection.lastToggled) {
+            this._selectRange(collection);
+        }
 
-                this.model.collection.lastToggled = this.model;
-                this.model.collection.checked = checked;
-            },
+        var checked = $(e.target).prop('checked');
 
-            onChange: function (e) {
-                var checked = $(e.target).prop('checked');
-                this.$el.parent().toggleClass('selected', checked);
-                this.model.trigger('backgrid:selected', this.model, checked);
-            },
+        collection.lastToggled = this.model;
+        collection.checked = checked;
+    },
 
-            _selectRange: function () {
-                var collection = this.model.collection;
-                var lastToggled = collection.lastToggled;
-                var checked = collection.checked;
+    onChange : function(e) {
+        var checked = $(e.target).prop('checked');
+        this.$el.parent().toggleClass('selected', checked);
+        this.model.trigger('backgrid:selected', this.model, checked);
+    },
 
-                var currentIndex = collection.indexOf(this.model);
-                var lastIndex = collection.indexOf(lastToggled);
+    _selectRange : function(collection) {
+        var lastToggled = collection.lastToggled;
+        var checked = collection.checked;
 
-                var low = Math.min(currentIndex, lastIndex);
-                var high = Math.max(currentIndex, lastIndex);
-                var range = _.range(low + 1, high);
+        var currentIndex = collection.indexOf(this.model);
+        var lastIndex = collection.indexOf(lastToggled);
 
-                _.each(range, function (index) {
-                    var model = collection.at(index);
+        var low = Math.min(currentIndex, lastIndex);
+        var high = Math.max(currentIndex, lastIndex);
+        var range = _.range(low + 1, high);
 
-                    model.trigger('backgrid:select', model, checked);
-                });
+        _.each(range, function(index) {
+            var model = collection.at(index);
 
-                this.model.collection.lastToggled = undefined;
-                this.model.collection.checked = undefined;
-            }
+            model.trigger('backgrid:select', model, checked);
         });
-    });
+
+        collection.lastToggled = undefined;
+        collection.checked = undefined;
+    }
+});

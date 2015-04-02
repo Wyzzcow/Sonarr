@@ -1,7 +1,7 @@
-﻿'use strict';
+'use strict';
 require.config({
 
-    paths: {
+    paths : {
         'backbone'                : 'JsLibraries/backbone',
         'moment'                  : 'JsLibraries/moment',
         'filesize'                : 'JsLibraries/filesize',
@@ -30,280 +30,130 @@ require.config({
         'jquery'                  : 'JsLibraries/jquery',
         'typeahead'               : 'JsLibraries/typeahead',
         'zero.clipboard'          : 'JsLibraries/zero.clipboard',
-        'libs'                    : 'JsLibraries/',
-
-        'api': 'Require/require.api'
+        'libs'                    : 'JsLibraries/'
     },
 
-    shim: {
-
-        api: {
-            deps:
-                [
-                    'jquery'
-                ]
+    shim : {
+        api                       : {
+            deps : ['jquery']
         },
-
-        jquery                : {
-            exports: '$'
+        jquery                    : {
+            exports : '$'
         },
-        messenger             : {
-            deps   :
-                [
-                    'jquery'
-                ],
-            exports: 'Messenger',
-            init : function () {
+        messenger                 : {
+            deps    : ['jquery'],
+            exports : 'Messenger',
+            init    : function() {
                 window.Messenger.options = {
-                    theme: 'flat'
+                    theme : 'flat'
                 };
             }
         },
-        signalR               : {
-            deps:
-                [
-                    'jquery'
-                ]
+        signalR                   : {
+            deps : ['jquery']
         },
-        bootstrap             : {
-            deps:
-                [
-                    'jquery'
-                ]
+        bootstrap                 : {
+            deps : ['jquery']
         },
-        'bootstrap.tagsinput' : {
-            deps:
-                [
-                    'bootstrap',
-                    'typeahead'
-                ]
+        'bootstrap.tagsinput'     : {
+            deps : [
+                'bootstrap',
+                'typeahead'
+            ]
         },
-        backstrech            : {
-            deps:
-                [
-                    'jquery'
-                ]
+        backstrech                : {
+            deps : ['jquery']
         },
-        underscore            : {
-            deps   :
-                [
-                    'jquery'
-                ],
-            exports: '_'
+        underscore                : {
+            deps    : ['jquery'],
+            exports : '_'
         },
-        backbone              : {
-            deps:
-                [
-                    'jquery',
-                    'Instrumentation/ErrorHandler',
-                    'underscore',
-                    'Mixins/jquery.ajax',
-                    'jQuery/ToTheTop'
-                ],
-
-            exports: 'Backbone'
+        backbone                  : {
+            deps    : [
+                'jquery',
+                'Instrumentation/ErrorHandler',
+                'underscore',
+                'Mixins/jquery.ajax',
+                'jQuery/ToTheTop'
+            ],
+            exports : 'Backbone'
         },
-        marionette            : {
-            deps:
-                [
-                    'backbone',
-                    'Handlebars/backbone.marionette.templates',
-                    'Mixins/AsNamedView'
-                ],
-
-            exports: 'Marionette',
-            init   : function (Backbone, TemplateMixin, AsNamedView) {
+        marionette                : {
+            deps    : [
+                'backbone',
+                'Handlebars/backbone.marionette.templates',
+                'Mixins/AsNamedView'
+            ],
+            exports : 'Marionette',
+            init    : function(Backbone, TemplateMixin, AsNamedView) {
                 TemplateMixin.call(window.Marionette.TemplateCache);
                 AsNamedView.call(window.Marionette.ItemView.prototype);
-
             }
         },
-        'typeahead'           : {
-            deps:
-                [
-                    'jquery'
-                ]
+        'typeahead'               : {
+            deps : ['jquery']
         },
-        'jquery-ui'           : {
-            deps:
-                [
-                    'jquery'
-                ]
+        'jquery-ui'               : {
+            deps : ['jquery']
         },
-        'jquery.knob'         : {
-            deps:
-                [
-                    'jquery'
-                ]
+        'jquery.knob'             : {
+            deps : ['jquery']
         },
-        'jquery.easypiechart'         : {
-            deps:
-                [
-                    'jquery'
-                ]
+        'jquery.easypiechart'     : {
+            deps : ['jquery']
         },
-        'jquery.dotdotdot'    : {
-            deps:
-                [
-                    'jquery'
-                ]
+        'jquery.dotdotdot'        : {
+            deps : ['jquery']
         },
-        'backbone.pageable'   : {
-            deps:
-                [
-                    'backbone'
-                ]
+        'backbone.pageable'       : {
+            deps : ['backbone']
         },
-        'backbone.deepmodel'  : {
-            deps:
-                [
-                    'backbone',
-                    'underscore'
-                ]
+        'backbone.deepmodel'      : {
+            deps : [
+                'backbone',
+                'underscore'
+            ]
         },
-        'backbone.validation' : {
-            deps   :
-                [
-                    'backbone'
-                ],
-            exports: 'Backbone.Validation'
+        'backbone.validation'     : {
+            deps    : ['backbone'],
+            exports : 'Backbone.Validation'
         },
-        'backbone.modelbinder': {
-            deps:
-                [
-                    'backbone'
-                ]
+        'backbone.modelbinder'    : {
+            deps : ['backbone']
         },
-        'backbone.collectionview': {
-            deps:
-                [
-                    'backbone',
-                    'jquery-ui'
-                ],                
-            exports: 'Backbone.CollectionView'
+        'backbone.collectionview' : {
+            deps    : [
+                'backbone',
+                'jquery-ui'
+            ],
+            exports : 'Backbone.CollectionView'
         },
-        backgrid              : {
-            deps:
-                [
-                    'backbone'
-                ],
-
-            exports: 'Backgrid',
-
-            init: function () {
-                require(
-                    [
-                        'Shared/Grid/HeaderCell'
-                    ], function () {
-
-                        window.Backgrid.Column.prototype.defaults = {
-                            name      : undefined,
-                            label     : undefined,
-                            sortable  : true,
-                            editable  : false,
-                            renderable: true,
-                            formatter : undefined,
-                            cell      : undefined,
-                            headerCell: 'NzbDrone',
-                            sortType  : 'toggle'
-                        };
-                    });
+        backgrid                  : {
+            deps    : ['backbone'],
+            exports : 'Backgrid',
+            init    : function() {
+                require(['Shared/Grid/HeaderCell'], function() {
+                    window.Backgrid.Column.prototype.defaults = {
+                        name       : undefined,
+                        label      : undefined,
+                        sortable   : true,
+                        editable   : false,
+                        renderable : true,
+                        formatter  : undefined,
+                        cell       : undefined,
+                        headerCell : 'NzbDrone',
+                        sortType   : 'toggle'
+                    };
+                });
             }
         },
-        'backgrid.paginator'  : {
-
-            exports: 'Backgrid.Extension.Paginator',
-
-            deps:
-                [
-                    'backgrid'
-                ]
+        'backgrid.paginator'      : {
+            deps    : ['backgrid'],
+            exports : 'Backgrid.Extension.Paginator'
         },
-        'backgrid.selectall'  : {
-
-            exports: 'Backgrid.Extension.SelectRowCell',
-
-            deps:
-                [
-                    'backgrid'
-                ]
+        'backgrid.selectall'      : {
+            deps    : ['backgrid'],
+            exports : 'Backgrid.Extension.SelectRowCell'
         }
     }
 });
-
-
-require.config({
-    urlArgs: 'v=' + window.NzbDrone.Version
-});
-
-define(
-    [
-        'jquery',
-        'backbone',
-        'marionette',
-        'jQuery/RouteBinder',
-        'Shared/SignalRBroadcaster',
-        'Navbar/NavbarLayout',
-        'AppLayout',
-        'Series/SeriesController',
-        'Router',
-        'Shared/Modal/ModalController',
-        'Shared/ControlPanel/ControlPanelController',
-        'System/StatusModel',
-        'Shared/Tooltip',
-        'Instrumentation/StringFormat',
-        'LifeCycle',
-        'Hotkeys/Hotkeys'
-    ], function ($,
-                 Backbone,
-                 Marionette,
-                 RouteBinder,
-                 SignalRBroadcaster,
-                 NavbarLayout,
-                 AppLayout,
-                 SeriesController,
-                 Router,
-                 ModalController,
-                 ControlPanelController,
-                 serverStatusModel,
-                 Tooltip) {
-
-        new SeriesController();
-        new ModalController();
-        new ControlPanelController();
-        new Router();
-
-        var app = new Marionette.Application();
-
-        app.addInitializer(function () {
-            console.log('starting application');
-        });
-
-        app.addInitializer(SignalRBroadcaster.appInitializer, {
-            app: app
-        });
-
-        app.addInitializer(Tooltip.appInitializer, {
-            app: app
-        });
-
-        app.addInitializer(function () {
-            Backbone.history.start({ pushState: true, root: serverStatusModel.get('urlBase') });
-            RouteBinder.bind();
-            AppLayout.navbarRegion.show(new NavbarLayout());
-            $('body').addClass('started');
-        });
-
-        app.addInitializer(function () {
-
-            var footerText = serverStatusModel.get('version');
-
-            if (serverStatusModel.get('branch') !== 'master') {
-                footerText += '</br>' + serverStatusModel.get('branch');
-            }
-
-            $('#footer-region .version').html(footerText);
-        });
-
-        return app;
-    });

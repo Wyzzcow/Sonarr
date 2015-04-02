@@ -1,62 +1,58 @@
-'use strict';
+var moment = require('moment');
+var filesize = require('filesize');
+var UiSettings = require('./UiSettingsModel');
 
-define(
-    [
-        'moment',
-        'filesize',
-        'Shared/UiSettingsModel'
-    ], function (moment, filesize, UiSettings) {
+module.exports = {
+    bytes : function(sourceSize) {
+        var size = Number(sourceSize);
 
-        return {
+        if (isNaN(size)) {
+            return '';
+        }
 
-            bytes: function (sourceSize) {
-                var size = Number(sourceSize);
+        return filesize(size, {
+            base  : 2,
+            round : 1
+        });
+    },
 
-                if (isNaN(size)) {
-                    return '';
-                }
+    relativeDate : function(sourceDate) {
+        if (!sourceDate) {
+            return '';
+        }
 
-                return filesize(size, { base: 2, round: 1 });
-            },
+        var date = moment(sourceDate);
+        var calendarDate = date.calendar();
 
-            relativeDate: function (sourceDate) {
-                if (!sourceDate) {
-                    return '';
-                }
+        //TODO: It would be nice to not have to hack this...
+        var strippedCalendarDate = calendarDate.substring(0, calendarDate.indexOf(' at '));
 
-                var date = moment(sourceDate);
-                var calendarDate = date.calendar();
+        if (strippedCalendarDate) {
+            return strippedCalendarDate;
+        }
 
-                //TODO: It would be nice to not have to hack this...
-                var strippedCalendarDate = calendarDate.substring(0, calendarDate.indexOf(' at '));
+        if (date.isAfter(moment())) {
+            return date.fromNow(true);
+        }
 
-                if (strippedCalendarDate){
-                    return strippedCalendarDate;
-                }
+        if (date.isBefore(moment().add('years', -1))) {
+            return date.format(UiSettings.get('shortDateFormat'));
+        }
 
-                if (date.isAfter(moment())) {
-                    return date.fromNow(true);
-                }
+        return date.fromNow();
+    },
 
-                if (date.isBefore(moment().add('years', -1))) {
-                    return date.format(UiSettings.get('shortDateFormat'));
-                }
+    pad : function(n, width, z) {
+        z = z || '0';
+        n = n + '';
+        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+    },
 
-                return date.fromNow();
-            },
+    number : function(input) {
+        if (!input) {
+            return '0';
+        }
 
-            pad: function (n, width, z) {
-                z = z || '0';
-                n = n + '';
-                return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-            },
-
-            number: function (input) {
-                if (!input) {
-                    return '0';
-                }
-
-                return input.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            }
-        };
-    });
+        return input.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+};

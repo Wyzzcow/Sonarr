@@ -1,70 +1,83 @@
-﻿'use strict';
-define(
-    [
-        'Activity/History/HistoryModel',
-        'backbone.pageable',
-        'Mixins/AsFilteredCollection',
-        'Mixins/AsSortedCollection',
-        'Mixins/AsPersistedStateCollection'
-    ], function (HistoryModel, PageableCollection, AsFilteredCollection, AsSortedCollection, AsPersistedStateCollection) {
-        var Collection = PageableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/history',
-            model: HistoryModel,
+var HistoryModel = require('./HistoryModel');
+var PageableCollection = require('backbone.pageable');
+var AsFilteredCollection = require('../../Mixins/AsFilteredCollection');
+var AsSortedCollection = require('../../Mixins/AsSortedCollection');
+var AsPersistedStateCollection = require('../../Mixins/AsPersistedStateCollection');
 
-            state: {
-                pageSize: 15,
-                sortKey : 'date',
-                order   : 1
-            },
+var Collection = PageableCollection.extend({
+    url   : window.NzbDrone.ApiRoot + '/history',
+    model : HistoryModel,
 
-            queryParams: {
-                totalPages  : null,
-                totalRecords: null,
-                pageSize    : 'pageSize',
-                sortKey     : 'sortKey',
-                order       : 'sortDir',
-                directions  : {
-                    '-1': 'asc',
-                    '1' : 'desc'
-                }
-            },
+    state : {
+        pageSize : 15,
+        sortKey  : 'date',
+        order    : 1
+    },
 
-            filterModes: {
-                'all'      : [null, null],
-                'grabbed'  : ['eventType', '1'],
-                'imported' : ['eventType', '3'],
-                'failed'   : ['eventType', '4'],
-                'deleted'  : ['eventType', '5']
-            },
+    queryParams : {
+        totalPages   : null,
+        totalRecords : null,
+        pageSize     : 'pageSize',
+        sortKey      : 'sortKey',
+        order        : 'sortDir',
+        directions   : {
+            '-1' : 'asc',
+            '1'  : 'desc'
+        }
+    },
 
-            sortMappings: {
-                'series'   : { sortKey: 'series.sortTitle' }
-            },
+    filterModes : {
+        'all'      : [
+            null,
+            null
+        ],
+        'grabbed'  : [
+            'eventType',
+            '1'
+        ],
+        'imported' : [
+            'eventType',
+            '3'
+        ],
+        'failed'   : [
+            'eventType',
+            '4'
+        ],
+        'deleted'  : [
+            'eventType',
+            '5'
+        ]
+    },
 
-            initialize: function (options) {
-                delete this.queryParams.episodeId;
+    sortMappings : {
+        'series' : { sortKey : 'series.sortTitle' }
+    },
 
-                if (options) {
-                    if (options.episodeId) {
-                        this.queryParams.episodeId = options.episodeId;
-                    }
-                }
-            },
+    initialize : function(options) {
+        delete this.queryParams.episodeId;
 
-            parseState: function (resp) {
-                return { totalRecords: resp.totalRecords };
-            },
-
-            parseRecords: function (resp) {
-                if (resp) {
-                    return resp.records;
-                }
-
-                return resp;
+        if (options) {
+            if (options.episodeId) {
+                this.queryParams.episodeId = options.episodeId;
             }
-        });
+        }
+    },
 
-        Collection = AsFilteredCollection.call(Collection);
-        Collection = AsSortedCollection.call(Collection);
-        return AsPersistedStateCollection.call(Collection);
-    });
+    parseState : function(resp) {
+        return { totalRecords : resp.totalRecords };
+    },
+
+    parseRecords : function(resp) {
+        if (resp) {
+            return resp.records;
+        }
+
+        return resp;
+    }
+});
+
+Collection = AsFilteredCollection.call(Collection);
+Collection = AsSortedCollection.call(Collection);
+Collection = AsPersistedStateCollection.call(Collection);
+
+module.exports = Collection;

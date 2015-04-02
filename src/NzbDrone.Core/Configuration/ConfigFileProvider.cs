@@ -6,8 +6,10 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using NzbDrone.Common.Cache;
+using NzbDrone.Common.Disk;
 using NzbDrone.Common.EnvironmentInfo;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Authentication;
 using NzbDrone.Core.Configuration.Events;
 using NzbDrone.Core.Lifecycle;
 using NzbDrone.Core.Messaging.Commands;
@@ -28,14 +30,11 @@ namespace NzbDrone.Core.Configuration
         int SslPort { get; }
         bool EnableSsl { get; }
         bool LaunchBrowser { get; }
-        bool AuthenticationEnabled { get; }
+        AuthenticationType AuthenticationMethod { get; }
         bool AnalyticsEnabled { get; }
-        string Username { get; }
-        string Password { get; }
         string LogLevel { get; }
         string Branch { get; }
         string ApiKey { get; }
-        bool Torrent { get; }
         string SslCertHash { get; }
         string UrlBase { get; }
         Boolean UpdateAutomatically { get; }
@@ -48,15 +47,22 @@ namespace NzbDrone.Core.Configuration
         public const string CONFIG_ELEMENT_NAME = "Config";
 
         private readonly IEventAggregator _eventAggregator;
+        private readonly IDiskProvider _diskProvider;
         private readonly ICached<string> _cache;
 
         private readonly string _configFile;
         private static readonly Regex HiddenCharacterRegex = new Regex("[^a-z0-9]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public ConfigFileProvider(IAppFolderInfo appFolderInfo, ICacheManager cacheManager, IEventAggregator eventAggregator)
+        private static readonly object Mutex = new object();
+
+        public ConfigFileProvider(IAppFolderInfo appFolderInfo,
+                                  ICacheManager cacheManager,
+                                  IEventAggregator eventAggregator,
+                                  IDiskProvider diskProvider)
         {
             _cache = cacheManager.GetCache<string>(GetType());
             _eventAggregator = eventAggregator;
+            _diskProvider = diskProvider;
             _configFile = appFolderInfo.GetConfigPath();
         }
 
@@ -155,14 +161,20 @@ namespace NzbDrone.Core.Configuration
             }
         }
 
-        public bool Torrent
+        public AuthenticationType AuthenticationMethod
         {
-            get { return GetValueBoolean("Torrent", false, persist: false); }
-        }
+            get
+            {
+                var enabled = GetValueBoolean("AuthenticationEnabled", false, false);
 
-        public bool AuthenticationEnabled
-        {
-            get { return GetValueBoolean("AuthenticationEnabled", false); }
+                if (enabled)
+                {
+                    SetValue("AuthenticationMethod", AuthenticationType.Basic);
+                    return AuthenticationType.Basic;
+                }
+                
+                return GetValueEnum("AuthenticationMethod", AuthenticationType.None);
+            }
         }
 
         public bool AnalyticsEnabled
@@ -176,16 +188,6 @@ namespace NzbDrone.Core.Configuration
         public string Branch
         {
             get { return GetValue("Branch", "master").ToLowerInvariant(); }
-        }
-
-        public string Username
-        {
-            get { return GetValue("Username", ""); }
-        }
-
-        public string Password
-        {
-            get { return GetValue("Password", ""); }
         }
 
         public string LogLevel
@@ -247,8 +249,6 @@ namespace NzbDrone.Core.Configuration
         {
             return _cache.Get(key, () =>
                 {
-                    EnsureDefaultConfigFile();
-
                     var xDoc = LoadConfigFile();
                     var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
 
@@ -274,8 +274,6 @@ namespace NzbDrone.Core.Configuration
 
         public void SetValue(string key, object value)
         {
-            EnsureDefaultConfigFile();
-
             var valueString = value.ToString().Trim();
             var xDoc = LoadConfigFile();
             var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
@@ -296,7 +294,7 @@ namespace NzbDrone.Core.Configuration
 
             _cache.Set(key, valueString);
 
-            xDoc.Save(_configFile);
+            SaveConfigFile(xDoc);
         }
 
         public void SetValue(string key, Enum value)
@@ -308,18 +306,12 @@ namespace NzbDrone.Core.Configuration
         {
             if (!File.Exists(_configFile))
             {
-                var xDoc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"));
-                xDoc.Add(new XElement(CONFIG_ELEMENT_NAME));
-                xDoc.Save(_configFile);
-
                 SaveConfigDictionary(GetConfigDictionary());
             }
         }
 
         private void DeleteOldValues()
         {
-            EnsureDefaultConfigFile();
-
             var xDoc = LoadConfigFile();
             var config = xDoc.Descendants(CONFIG_ELEMENT_NAME).Single();
 
@@ -336,19 +328,38 @@ namespace NzbDrone.Core.Configuration
                 }
             }
 
-            xDoc.Save(_configFile);
+            SaveConfigFile(xDoc);
         }
 
         private XDocument LoadConfigFile()
         {
             try
             {
-                return XDocument.Load(_configFile);
+                lock (Mutex)
+                {
+                    if (_diskProvider.FileExists(_configFile))
+                    {
+                        return XDocument.Parse(_diskProvider.ReadAllText(_configFile));
+                    }
+
+                    var xDoc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"));
+                    xDoc.Add(new XElement(CONFIG_ELEMENT_NAME));
+
+                    return xDoc;
+                }
             }
 
             catch (XmlException ex)
             {
                 throw new InvalidConfigFileException(_configFile + " is invalid, please see the http://wiki.sonarr.tv for steps to resolve this issue.", ex);
+            }
+        }
+
+        private void SaveConfigFile(XDocument xDoc)
+        {
+            lock (Mutex)
+            {
+                _diskProvider.WriteAllText(_configFile, xDoc.ToString());
             }
         }
 
@@ -359,6 +370,7 @@ namespace NzbDrone.Core.Configuration
 
         public void HandleAsync(ApplicationStartedEvent message)
         {
+            EnsureDefaultConfigFile();
             DeleteOldValues();
         }
 

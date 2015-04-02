@@ -51,7 +51,7 @@ namespace NzbDrone.Core.Test.ParserTests
                 @"C:\Test\Deadwood.S02E12.1080p.BluRay.x264-SONARR\Backup_72023S02-12.mkv".AsOsAgnostic(),
                 "deadwood",
                 Quality.Bluray1080p,
-                "SONARR"
+                null
             },
             new object[]
             {
@@ -73,6 +73,13 @@ namespace NzbDrone.Core.Test.ParserTests
                 "grimm",
                 Quality.WEBDL720p,
                 "ECI"
+            },
+            new object[]
+            {
+                @"C:\Test\The.Good.Wife.S02E23.720p.HDTV.x264-NZBgeek/cgajsofuejsa501.mkv".AsOsAgnostic(),
+                "thegoodwife",
+                Quality.HDTV720p,
+                "NZBgeek"
             }
         };
 

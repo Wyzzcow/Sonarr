@@ -1,26 +1,20 @@
-'use strict';
+var NzbDroneCell = require('../../Cells/NzbDroneCell');
 
-define(
-    [
-        'Cells/NzbDroneCell'
-    ], function (NzbDroneCell) {
-        return NzbDroneCell.extend({
+module.exports = NzbDroneCell.extend({
+    className : 'blacklist-controls-cell',
 
-            className: 'blacklist-controls-cell',
+    events : {
+        'click' : '_delete'
+    },
 
-            events: {
-                'click': '_delete'
-            },
+    render : function() {
+        this.$el.empty();
+        this.$el.html('<i class="icon-sonarr-delete"></i>');
 
-            render: function () {
-                this.$el.empty();
-                this.$el.html('<i class="icon-nd-delete"></i>');
+        return this;
+    },
 
-                return this;
-            },
-
-            _delete: function () {
-                this.model.destroy();
-            }
-        });
-    });
+    _delete : function() {
+        this.model.destroy();
+    }
+});

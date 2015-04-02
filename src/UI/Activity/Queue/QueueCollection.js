@@ -1,31 +1,27 @@
-﻿'use strict';
-define(
-    [
-        'underscore',
-        'backbone',
-        'backbone.pageable',
-        'Activity/Queue/QueueModel',
-        'Mixins/backbone.signalr.mixin'
-    ], function (_, Backbone, PageableCollection, QueueModel) {
-        var QueueCollection = PageableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/queue',
-            model: QueueModel,
+var _ = require('underscore');
+var Backbone = require('backbone');
+var PageableCollection = require('backbone.pageable');
+var QueueModel = require('./QueueModel');
+require('../../Mixins/backbone.signalr.mixin');
 
-            state: {
-                pageSize: 15
-            },
+var QueueCollection = PageableCollection.extend({
+    url   : window.NzbDrone.ApiRoot + '/queue',
+    model : QueueModel,
 
-            mode: 'client',
+    state : {
+        pageSize : 15
+    },
 
-            findEpisode: function (episodeId) {
-                return _.find(this.fullCollection.models, function (queueModel) {
-                    return queueModel.get('episode').id === episodeId;
-                });
-            }
+    mode : 'client',
+
+    findEpisode : function(episodeId) {
+        return _.find(this.fullCollection.models, function(queueModel) {
+            return queueModel.get('episode').id === episodeId;
         });
+    }
+});
 
-        var collection = new QueueCollection().bindSignalR();
-        collection.fetch();
+var collection = new QueueCollection().bindSignalR();
+collection.fetch();
 
-        return collection;
-    });
+module.exports = collection;

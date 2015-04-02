@@ -31,6 +31,8 @@ using NzbDrone.Core.Tags;
 using NzbDrone.Core.ThingiProvider;
 using NzbDrone.Core.Tv;
 using NzbDrone.Common.Disk;
+using NzbDrone.Core.Authentication;
+using NzbDrone.Core.Messaging.Commands;
 
 namespace NzbDrone.Core.Datastore
 {
@@ -103,6 +105,10 @@ namespace NzbDrone.Core.Datastore
 
             Mapper.Entity<DelayProfile>().RegisterModel("DelayProfiles");
             Mapper.Entity<UnWatchedResult>().RegisterModel("UnWatched");
+            Mapper.Entity<User>().RegisterModel("Users");
+            Mapper.Entity<CommandModel>().RegisterModel("Commands")
+                .Ignore(c => c.Message);
+
         }
 
         private static void RegisterMappers()
@@ -124,6 +130,10 @@ namespace NzbDrone.Core.Datastore
             MapRepository.Instance.RegisterTypeConverter(typeof(ReleaseInfo), new EmbeddedDocumentConverter());
             MapRepository.Instance.RegisterTypeConverter(typeof(HashSet<Int32>), new EmbeddedDocumentConverter());
             MapRepository.Instance.RegisterTypeConverter(typeof(OsPath), new OsPathConverter());
+            MapRepository.Instance.RegisterTypeConverter(typeof(Guid), new GuidConverter());
+            MapRepository.Instance.RegisterTypeConverter(typeof(Command), new CommandConverter());
+            MapRepository.Instance.RegisterTypeConverter(typeof(TimeSpan), new TimeSpanConverter());
+            MapRepository.Instance.RegisterTypeConverter(typeof(TimeSpan?), new TimeSpanConverter());
         }
 
         private static void RegisterProviderSettingConverter()

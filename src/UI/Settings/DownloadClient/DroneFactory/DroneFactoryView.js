@@ -1,26 +1,21 @@
-﻿'use strict';
-define(
-    [
-        'marionette',
-        'Mixins/AsModelBoundView',
-        'Mixins/AsValidatedView',
-        'Mixins/FileBrowser'
-    ], function (Marionette, AsModelBoundView, AsValidatedView) {
+var Marionette = require('marionette');
+var AsModelBoundView = require('../../../Mixins/AsModelBoundView');
+var AsValidatedView = require('../../../Mixins/AsValidatedView');
+require('../../../Mixins/FileBrowser');
 
-        var view = Marionette.ItemView.extend({
-            template: 'Settings/DownloadClient/DroneFactory/DroneFactoryViewTemplate',
+var view = Marionette.ItemView.extend({
+    template : 'Settings/DownloadClient/DroneFactory/DroneFactoryViewTemplate',
 
-            ui: {
-                droneFactory : '.x-path'
-            },
+    ui : {
+        droneFactory : '.x-path'
+    },
 
-            onShow: function () {
-                this.ui.droneFactory.fileBrowser();
-            }
-        });
+    onShow : function() {
+        this.ui.droneFactory.fileBrowser();
+    }
+});
 
-        AsModelBoundView.call(view);
-        AsValidatedView.call(view);
+AsModelBoundView.call(view);
+AsValidatedView.call(view);
 
-        return view;
-    });
+module.exports = view;

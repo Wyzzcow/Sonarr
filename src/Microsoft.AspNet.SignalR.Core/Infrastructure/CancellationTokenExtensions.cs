@@ -1,6 +1,9 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved. See License.md in the project root for license information.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading;
 
 namespace Microsoft.AspNet.SignalR.Infrastructure
@@ -48,8 +51,14 @@ namespace Microsoft.AspNet.SignalR.Infrastructure
                 // This normally waits until the callback is finished invoked but we don't care
                 if (_callbackWrapper.TrySetInvoked())
                 {
-                    // Bug #1549, .NET 4.0 has a bug where this throws if the CTS
-                    _registration.Dispose();
+                    try
+                    {
+                        _registration.Dispose();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // Bug #1549, .NET 4.0 has a bug where this throws if the CTS is disposed.
+                    }
                 }
             }
         }

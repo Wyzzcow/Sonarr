@@ -1,18 +1,29 @@
-'use strict';
-define(
-    [
-        'jquery'
-    ], function ($) {
-        return {
+var $ = require('jquery');
+require('bootstrap');
 
-            appInitializer: function () {
-                console.log('starting signalR');
+var Tooltip = $.fn.tooltip.Constructor;
 
-                $('body').tooltip({
-                    selector: '[title]'
-                });
+var origGetOptions = Tooltip.prototype.getOptions;
+Tooltip.prototype.getOptions = function(options) {
+    var result = origGetOptions.call(this, options);
 
-                return this;
-            }
-        };
-    });
+    if (result.container === false) {
+
+        var container = this.$element.closest('.btn-group,.input-group').parent();
+
+        if (container.length) {
+            result.container = container;
+        }
+    }
+
+    return result;
+};
+
+module.exports = {
+    appInitializer : function() {
+
+        $('body').tooltip({ selector : '[title]' });
+
+        return this;
+    }
+};

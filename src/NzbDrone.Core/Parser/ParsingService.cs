@@ -13,7 +13,8 @@ namespace NzbDrone.Core.Parser
 {
     public interface IParsingService
     {
-        LocalEpisode GetLocalEpisode(string filename, Series series, bool sceneSource);
+        LocalEpisode GetLocalEpisode(string filename, Series series);
+        LocalEpisode GetLocalEpisode(string filename, Series series, ParsedEpisodeInfo folderInfo, bool sceneSource);
         Series GetSeries(string title);
         RemoteEpisode Map(ParsedEpisodeInfo parsedEpisodeInfo, Int32 tvRageId = 0, SearchCriteriaBase searchCriteria = null);
         RemoteEpisode Map(ParsedEpisodeInfo parsedEpisodeInfo, Int32 seriesId, IEnumerable<Int32> episodeIds);
@@ -39,9 +40,25 @@ namespace NzbDrone.Core.Parser
             _logger = logger;
         }
 
-        public LocalEpisode GetLocalEpisode(string filename, Series series, bool sceneSource)
+        public LocalEpisode GetLocalEpisode(string filename, Series series)
         {
-            var parsedEpisodeInfo = Parser.ParsePath(filename);
+            return GetLocalEpisode(filename, series, null, false);
+        }
+
+        public LocalEpisode GetLocalEpisode(string filename, Series series, ParsedEpisodeInfo folderInfo, bool sceneSource)
+        {
+            ParsedEpisodeInfo parsedEpisodeInfo;
+
+            if (folderInfo != null)
+            {
+                parsedEpisodeInfo = folderInfo.JsonClone();
+                parsedEpisodeInfo.Quality = QualityParser.ParseQuality(Path.GetFileName(filename));
+            }
+
+            else
+            {
+                parsedEpisodeInfo = Parser.ParsePath(filename);                
+            }
 
             if (parsedEpisodeInfo == null || parsedEpisodeInfo.IsPossibleSpecialEpisode)
             {
@@ -292,7 +309,11 @@ namespace NzbDrone.Core.Parser
                 }
             }
 
-            var series = _seriesService.FindByTitleInexact(title);
+            var series = GetSeries(title);
+            if (series == null)
+            {
+                series = _seriesService.FindByTitleInexact(title);
+            }
             if (series == null && tvRageId > 0)
             {
                 series = _seriesService.FindByTvRageId(tvRageId);
@@ -327,7 +348,7 @@ namespace NzbDrone.Core.Parser
                 info.Language = Parser.ParseLanguage(title);
                 info.Special = true;
 
-                _logger.Info("Found special episode {0} for title '{1}'", info, title);
+                _logger.Debug("Found special episode {0} for title '{1}'", info, title);
                 return info;
             }
 

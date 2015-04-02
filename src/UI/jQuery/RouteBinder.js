@@ -1,74 +1,68 @@
-'use strict';
-define(
-    [
-        'backbone',
-        'jquery',
-        'System/StatusModel'
-    ], function (Backbone, $, StatusModel) {
-        //This module will automatically route all relative links through backbone router rather than
-        //causing links to reload pages.
+var Backbone = require('backbone');
+var $ = require('jquery');
+var StatusModel = require('../System/StatusModel');
 
-        var routeBinder = {
+//This module will automatically route all relative links through backbone router rather than
+//causing links to reload pages.
 
-            bind: function () {
-                var self = this;
-                $(document).on('click', 'a[href]', function (event) {
-                    self._handleClick(event);
-                });
-            },
+var routeBinder = {
 
-            _handleClick: function (event) {
-                var $target = $(event.target);
+    bind : function() {
+        var self = this;
+        $(document).on('click', 'a[href]', function(event) {
+            self._handleClick(event);
+        });
+    },
 
-                //check if tab nav
-                if ($target.parents('.nav-tabs').length) {
-                    return;
-                }
+    _handleClick : function(event) {
+        var $target = $(event.target);
 
-                if ($target.hasClass('no-router')) {
-                    return;
-                }
+        //check if tab nav
+        if ($target.parents('.nav-tabs').length) {
+            return;
+        }
 
-                var href = event.target.getAttribute('href');
+        if ($target.hasClass('no-router')) {
+            return;
+        }
 
-                if (!href && $target.closest('a') && $target.closest('a')[0]) {
+        var href = event.target.getAttribute('href');
 
-                    var linkElement = $target.closest('a')[0];
+        if (!href && $target.closest('a') && $target.closest('a')[0]) {
 
-                    if ($(linkElement).hasClass('no-router')) {
-                        return;
-                    }
+            var linkElement = $target.closest('a')[0];
 
-                    href = linkElement.getAttribute('href');
-                }
-
-                event.preventDefault();
-
-                if (!href) {
-                    throw 'couldn\'t find route target';
-                }
-
-                if (!href.startsWith('http')) {
-                    if (event.ctrlKey) {
-                        window.open(href, '_blank');
-                    }
-
-                    else {
-                        var relativeHref = href.replace(StatusModel.get('urlBase'), '');
-
-                        Backbone.history.navigate(relativeHref, { trigger: true });
-                    }
-                }
-                else if (href.contains('#')) {
-                    //Open in new tab without dereferer (since it doesn't support fragments)
-                    window.open(href, '_blank');
-                }
-                else {
-                    //Open in new tab
-                    window.open('http://www.dereferer.org/?' + encodeURI(href), '_blank');
-                }
+            if ($(linkElement).hasClass('no-router')) {
+                return;
             }
-        };
 
-        return routeBinder;
-    });
+            href = linkElement.getAttribute('href');
+        }
+
+        event.preventDefault();
+
+        if (!href) {
+            throw 'couldn\'t find route target';
+        }
+
+        if (!href.startsWith('http')) {
+            if (event.ctrlKey) {
+                window.open(href, '_blank');
+            }
+
+            else {
+                var relativeHref = href.replace(StatusModel.get('urlBase'), '');
+
+                Backbone.history.navigate(relativeHref, { trigger : true });
+            }
+        } else if (href.contains('#')) {
+            //Open in new tab without dereferer (since it doesn't support fragments)
+            window.open(href, '_blank');
+        } else {
+            //Open in new tab
+            window.open('http://www.dereferer.org/?' + encodeURI(href), '_blank');
+        }
+    }
+};
+
+module.exports = routeBinder;

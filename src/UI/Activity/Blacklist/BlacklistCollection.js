@@ -1,50 +1,47 @@
-﻿'use strict';
-define(
-    [
-        'Activity/Blacklist/BlacklistModel',
-        'backbone.pageable',
-        'Mixins/AsSortedCollection',
-        'Mixins/AsPersistedStateCollection'
-    ], function (BlacklistModel, PageableCollection, AsSortedCollection, AsPersistedStateCollection) {
-        var Collection = PageableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/blacklist',
-            model: BlacklistModel,
+var BlacklistModel = require('./BlacklistModel');
+var PageableCollection = require('backbone.pageable');
+var AsSortedCollection = require('../../Mixins/AsSortedCollection');
+var AsPersistedStateCollection = require('../../Mixins/AsPersistedStateCollection');
 
-            state: {
-                pageSize: 15,
-                sortKey : 'date',
-                order   : 1
-            },
+var Collection = PageableCollection.extend({
+    url   : window.NzbDrone.ApiRoot + '/blacklist',
+    model : BlacklistModel,
 
-            queryParams: {
-                totalPages  : null,
-                totalRecords: null,
-                pageSize    : 'pageSize',
-                sortKey     : 'sortKey',
-                order       : 'sortDir',
-                directions  : {
-                    '-1': 'asc',
-                    '1' : 'desc'
-                }
-            },
+    state : {
+        pageSize : 15,
+        sortKey  : 'date',
+        order    : 1
+    },
 
-            sortMappings: {
-                'series'   : { sortKey: 'series.sortTitle' }
-            },
+    queryParams : {
+        totalPages   : null,
+        totalRecords : null,
+        pageSize     : 'pageSize',
+        sortKey      : 'sortKey',
+        order        : 'sortDir',
+        directions   : {
+            '-1' : 'asc',
+            '1'  : 'desc'
+        }
+    },
 
-            parseState: function (resp) {
-                return { totalRecords: resp.totalRecords };
-            },
+    sortMappings : {
+        'series' : { sortKey : 'series.sortTitle' }
+    },
 
-            parseRecords: function (resp) {
-                if (resp) {
-                    return resp.records;
-                }
+    parseState : function(resp) {
+        return { totalRecords : resp.totalRecords };
+    },
 
-                return resp;
-            }
-        });
+    parseRecords : function(resp) {
+        if (resp) {
+            return resp.records;
+        }
 
-        Collection = AsSortedCollection.call(Collection);
-        return AsPersistedStateCollection.call(Collection);
-    });
+        return resp;
+    }
+});
+Collection = AsSortedCollection.call(Collection);
+Collection = AsPersistedStateCollection.call(Collection);
+
+module.exports = Collection;

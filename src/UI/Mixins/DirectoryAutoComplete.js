@@ -1,29 +1,22 @@
-'use strict';
-define(
-    [
-        'jquery',
-        'Mixins/AutoComplete'
-    ], function ($) {
+var $ = require('jquery');
+require('./AutoComplete');
 
-    $.fn.directoryAutoComplete = function () {
+$.fn.directoryAutoComplete = function() {
+    var query = 'path';
 
-        var query = 'path';
+    $(this).autoComplete({
+        resource : '/filesystem',
+        query    : query,
+        filter   : function(filter, response, callback) {
+            var matches = [];
 
-        $(this).autoComplete({
-            resource : '/filesystem',
-            query    : query,
-            filter   : function (filter, response, callback) {
+            $.each(response.directories, function(i, d) {
+                if (d[query] && d[query].startsWith(filter)) {
+                    matches.push({ value : d[query] });
+                }
+            });
 
-                var matches = [];
-
-                $.each(response.directories, function(i, d) {
-                    if (d[query] && d[query].startsWith(filter)) {
-                        matches.push({ value: d[query] });
-                    }
-                });
-
-                callback(matches);
-            }
-        });
-    };
-});
+            callback(matches);
+        }
+    });
+};

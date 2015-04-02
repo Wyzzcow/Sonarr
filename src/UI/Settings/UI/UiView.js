@@ -1,27 +1,22 @@
-﻿'use strict';
-define(
-    [
-        'vent',
-        'marionette',
-        'Shared/UiSettingsModel',
-        'Mixins/AsModelBoundView',
-        'Mixins/AsValidatedView'
-    ], function (vent, Marionette, UiSettingsModel, AsModelBoundView, AsValidatedView) {
-        var view = Marionette.ItemView.extend({
-            template: 'Settings/UI/UiViewTemplate',
+var vent = require('vent');
+var Marionette = require('marionette');
+var UiSettingsModel = require('../../Shared/UiSettingsModel');
+var AsModelBoundView = require('../../Mixins/AsModelBoundView');
+var AsValidatedView = require('../../Mixins/AsValidatedView');
 
-            initialize: function () {
-                this.listenTo(this.model, 'sync', this._reloadUiSettings);
-            },
+var view = Marionette.ItemView.extend({
+    template : 'Settings/UI/UiViewTemplate',
 
-            _reloadUiSettings: function() {
-                UiSettingsModel.fetch();
-            }
-        });
+    initialize : function() {
+        this.listenTo(this.model, 'sync', this._reloadUiSettings);
+    },
 
-        AsModelBoundView.call(view);
-        AsValidatedView.call(view);
+    _reloadUiSettings : function() {
+        UiSettingsModel.fetch();
+    }
+});
 
-        return view;
-    });
+AsModelBoundView.call(view);
+AsValidatedView.call(view);
 
+module.exports = view;

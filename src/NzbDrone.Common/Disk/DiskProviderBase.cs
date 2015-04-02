@@ -109,6 +109,25 @@ namespace NzbDrone.Common.Disk
             }
         }
 
+        public bool FolderWritable(string path)
+        {
+            Ensure.That(path, () => path).IsValidPath();
+
+            try
+            {
+                var testPath = Path.Combine(path, "sonarr_write_test.txt");
+                var testContent = string.Format("This file was created to verify if '{0}' is writable. It should've been automatically deleted. Feel free to delete it.", path);
+                File.WriteAllText(testPath, testContent);
+                File.Delete(testPath);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Logger.Trace("Directory '{0}' isn't writable. {1}", path, e.Message);
+                return false;
+            }
+        }
+
         public string[] GetDirectories(string path)
         {
             Ensure.That(path, () => path).IsValidPath();
@@ -336,7 +355,7 @@ namespace NzbDrone.Common.Disk
         {
             Ensure.That(path, () => path).IsValidPath();
 
-            var parent = Directory.GetParent(path);
+            var parent = Directory.GetParent(path.TrimEnd(Path.DirectorySeparatorChar));
 
             if (parent == null)
             {
@@ -421,7 +440,7 @@ namespace NzbDrone.Common.Disk
             return driveInfo.VolumeLabel;
         }
 
-        public FileStream StreamFile(string path)
+        public FileStream OpenReadStream(string path)
         {
             if (!FileExists(path))
             {
@@ -429,6 +448,11 @@ namespace NzbDrone.Common.Disk
             }
 
             return new FileStream(path, FileMode.Open, FileAccess.Read);
+        }
+
+        public FileStream OpenWriteStream(string path)
+        {
+            return new FileStream(path, FileMode.Create);
         }
 
         public List<DriveInfo> GetDrives()

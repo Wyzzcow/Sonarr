@@ -1,107 +1,100 @@
-'use strict';
+var AppLayout = require('../AppLayout');
 
-define(
-    ['AppLayout'],
-    function (AppLayout) {
+module.exports = function() {
+    var originalInitialize = this.prototype.initialize;
+    var originalOnBeforeClose = this.prototype.onBeforeClose;
 
-        return function () {
+    var saveInternal = function() {
+        var self = this;
+        this.ui.indicator.show();
 
-            var originalInitialize = this.prototype.initialize;
-            var originalOnBeforeClose = this.prototype.onBeforeClose;
+        if (this._onBeforeSave) {
+            this._onBeforeSave.call(this);
+        }
 
-            var saveInternal = function () {
-                var self = this;
-                this.ui.indicator.show();
+        var promise = this.model.save();
 
-                if (this._onBeforeSave) {
-                    this._onBeforeSave.call(this);
-                }
+        promise.always(function() {
+            if (!self.isClosed) {
+                self.ui.indicator.hide();
+            }
+        });
 
-                var promise = this.model.save();
+        promise.done(function() {
+            self.originalModelData = JSON.stringify(self.model.toJSON());
+        });
 
-                promise.always(function () {
-                    if (!self.isClosed) {
-                        self.ui.indicator.hide();
-                    }
-                });
+        return promise;
+    };
 
-                promise.done(function () {
-                    self.originalModelData = JSON.stringify(self.model.toJSON());
-                });
+    this.prototype.initialize = function(options) {
 
-                return promise;
-            };
+        if (!this.model) {
+            throw 'View has no model';
+        }
 
-            this.prototype.initialize = function (options) {
+        this.originalModelData = JSON.stringify(this.model.toJSON());
 
-                if (!this.model) {
-                    throw 'View has no model';
-                }
+        this.events = this.events || {};
+        this.events['click .x-save'] = '_save';
+        this.events['click .x-save-and-add'] = '_saveAndAdd';
+        this.events['click .x-test'] = '_test';
+        this.events['click .x-delete'] = '_delete';
 
-                this.originalModelData = JSON.stringify(this.model.toJSON());
+        this.ui = this.ui || {};
+        this.ui.indicator = '.x-indicator';
 
-                this.events = this.events || {};
-                this.events['click .x-save'] = '_save';
-                this.events['click .x-save-and-add'] = '_saveAndAdd';
-                this.events['click .x-test'] = '_test';
-                this.events['click .x-delete'] = '_delete';
+        if (originalInitialize) {
+            originalInitialize.call(this, options);
+        }
+    };
 
-                this.ui = this.ui || {};
-                this.ui.indicator = '.x-indicator';
+    this.prototype._save = function() {
 
-                if (originalInitialize) {
-                    originalInitialize.call(this, options);
-                }
-            };
+        var self = this;
+        var promise = saveInternal.call(this);
 
-            this.prototype._save = function () {
+        promise.done(function() {
+            if (self._onAfterSave) {
+                self._onAfterSave.call(self);
+            }
+        });
+    };
 
-                var self = this;
-                var promise = saveInternal.call(this);
+    this.prototype._saveAndAdd = function() {
 
-                promise.done(function () {
-                    if (self._onAfterSave) {
-                        self._onAfterSave.call(self);
-                    }
-                });
-            };
+        var self = this;
+        var promise = saveInternal.call(this);
 
-            this.prototype._saveAndAdd = function () {
+        promise.done(function() {
+            if (self._onAfterSaveAndAdd) {
+                self._onAfterSaveAndAdd.call(self);
+            }
+        });
+    };
 
-                var self = this;
-                var promise = saveInternal.call(this);
+    this.prototype._test = function() {
+        var self = this;
 
-                promise.done(function () {
-                    if (self._onAfterSaveAndAdd) {
-                        self._onAfterSaveAndAdd.call(self);
-                    }
-                });
-            };
+        this.ui.indicator.show();
 
-            this.prototype._test = function () {
-                var self = this;
+        this.model.test().always(function() {
+            self.ui.indicator.hide();
+        });
+    };
 
-                this.ui.indicator.show();
+    this.prototype._delete = function() {
+        var view = new this._deleteView({ model : this.model });
+        AppLayout.modalRegion.show(view);
+    };
 
-                this.model.test().always(function () {
-                    self.ui.indicator.hide();
-                });
-            };
+    this.prototype.onBeforeClose = function() {
+        this.model.set(JSON.parse(this.originalModelData));
 
-            this.prototype._delete = function () {
-                var view = new this._deleteView({ model: this.model });
-                AppLayout.modalRegion.show(view);
-            };
+        if (originalOnBeforeClose) {
+            originalOnBeforeClose.call(this);
+        }
+    };
 
-            this.prototype.onBeforeClose = function () {
-                this.model.set(JSON.parse(this.originalModelData));
-
-                if (originalOnBeforeClose) {
-                    originalOnBeforeClose.call(this);
-                }
-            };
-
-            return this;
-        };
-    }
-);
+    return this;
+};

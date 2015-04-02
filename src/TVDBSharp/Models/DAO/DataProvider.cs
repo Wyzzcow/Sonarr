@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Net;
 using System.Xml.Linq;
+using NzbDrone.Common.Cache;
 using NzbDrone.Common.Http;
 using NzbDrone.Common.Instrumentation;
 using TVDBSharp.Models.Enums;
@@ -16,11 +17,11 @@ namespace TVDBSharp.Models.DAO
         private const string BaseUrl = "http://thetvdb.com";
 
 
-        private static HttpClient httpClient = new HttpClient(NzbDroneLogger.GetLogger(typeof(DataProvider)));
+        private static HttpClient httpClient = new HttpClient(new CacheManager(), NzbDroneLogger.GetLogger(typeof(DataProvider)));
 
         public XDocument GetShow(int showID)
         {
-            return GetXDocumentFromUrl(string.Format("{0}/api/{1}/series/{2}/all/", BaseUrl, ApiKey, showID));
+            return GetXDocumentFromUrl(string.Format("{0}/api/{1}/series/{2}/all/en.xml", BaseUrl, ApiKey, showID));
         }
 
         public XDocument GetEpisode(int episodeId, string lang)

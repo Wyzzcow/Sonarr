@@ -1,83 +1,71 @@
-'use strict';
-define(
-    [
-        'marionette',
-        'backgrid',
-        'System/Task/TaskCollection',
-        'Cells/RelativeTimeCell',
-        'System/Task/TaskIntervalCell',
-        'System/Task/ExecuteTaskCell',
-        'System/Task/NextExecutionCell',
-        'Shared/LoadingView',
-        'Mixins/backbone.signalr.mixin'
-    ], function (Marionette,
-                 Backgrid,
-                 BackupCollection,
-                 RelativeTimeCell,
-                 TaskIntervalCell,
-                 ExecuteTaskCell,
-                 NextExecutionCell,
-                 LoadingView) {
-        return Marionette.Layout.extend({
-            template: 'System/Task/TaskLayoutTemplate',
+var Marionette = require('marionette');
+var Backgrid = require('backgrid');
+var BackupCollection = require('./TaskCollection');
+var RelativeTimeCell = require('../../Cells/RelativeTimeCell');
+var TaskIntervalCell = require('./TaskIntervalCell');
+var ExecuteTaskCell = require('./ExecuteTaskCell');
+var NextExecutionCell = require('./NextExecutionCell');
+var LoadingView = require('../../Shared/LoadingView');
+require('../../Mixins/backbone.signalr.mixin');
 
-            regions: {
-                tasks : '#x-tasks'
-            },
+module.exports = Marionette.Layout.extend({
+    template : 'System/Task/TaskLayoutTemplate',
 
-            columns: [
-                {
-                    name     : 'name',
-                    label    : 'Name',
-                    sortable : true,
-                    cell     : 'string'
-                },
-                {
-                    name     : 'interval',
-                    label    : 'Interval',
-                    sortable : true,
-                    cell     : TaskIntervalCell
-                },
-                {
-                    name     : 'lastExecution',
-                    label    : 'Last Execution',
-                    sortable : true,
-                    cell     : RelativeTimeCell
-                },
-                {
-                    name     : 'nextExecution',
-                    label    : 'Next Execution',
-                    sortable : true,
-                    cell     : NextExecutionCell
-                },
-                {
-                    name     : 'this',
-                    label    : '',
-                    sortable : false,
-                    cell     : ExecuteTaskCell
-                }
-            ],
+    regions : {
+        tasks : '#x-tasks'
+    },
 
-            initialize: function () {
-                this.taskCollection = new BackupCollection();
+    columns : [
+        {
+            name     : 'name',
+            label    : 'Name',
+            sortable : true,
+            cell     : 'string'
+        },
+        {
+            name     : 'interval',
+            label    : 'Interval',
+            sortable : true,
+            cell     : TaskIntervalCell
+        },
+        {
+            name     : 'lastExecution',
+            label    : 'Last Execution',
+            sortable : true,
+            cell     : RelativeTimeCell
+        },
+        {
+            name     : 'nextExecution',
+            label    : 'Next Execution',
+            sortable : true,
+            cell     : NextExecutionCell
+        },
+        {
+            name     : 'this',
+            label    : '',
+            sortable : false,
+            cell     : ExecuteTaskCell
+        }
+    ],
 
-                this.listenTo(this.taskCollection, 'sync', this._showTasks);
-                this.taskCollection.bindSignalR();
-            },
+    initialize : function() {
+        this.taskCollection = new BackupCollection();
 
-            onRender: function () {
-                this.tasks.show(new LoadingView());
+        this.listenTo(this.taskCollection, 'sync', this._showTasks);
+        this.taskCollection.bindSignalR();
+    },
 
-                this.taskCollection.fetch();
-            },
+    onRender : function() {
+        this.tasks.show(new LoadingView());
 
-            _showTasks: function () {
+        this.taskCollection.fetch();
+    },
 
-                this.tasks.show(new Backgrid.Grid({
-                    columns   : this.columns,
-                    collection: this.taskCollection,
-                    className : 'table table-hover'
-                }));
-            }
-        });
-    });
+    _showTasks : function() {
+        this.tasks.show(new Backgrid.Grid({
+            columns    : this.columns,
+            collection : this.taskCollection,
+            className  : 'table table-hover'
+        }));
+    }
+});

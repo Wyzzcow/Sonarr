@@ -1,26 +1,25 @@
-﻿'use strict';
+var AppLayout = require('../../../AppLayout');
+var Marionette = require('marionette');
+var EditView = require('./RemotePathMappingEditView');
 
-define([
-    'AppLayout',
-    'marionette',
-    'Settings/DownloadClient/RemotePathMapping/RemotePathMappingEditView'
-], function (AppLayout, Marionette, EditView) {
+module.exports = Marionette.ItemView.extend({
+    template  : 'Settings/DownloadClient/RemotePathMapping/RemotePathMappingItemViewTemplate',
+    className : 'row',
 
-    return Marionette.ItemView.extend({
-        template  : 'Settings/DownloadClient/RemotePathMapping/RemotePathMappingItemViewTemplate',
-        className : 'row',
+    events : {
+        'click .x-edit' : '_editMapping'
+    },
 
-        events: {
-            'click .x-edit'    : '_editMapping'
-        },
+    initialize : function() {
+        this.listenTo(this.model, 'sync', this.render);
+    },
 
-        initialize: function () {
-            this.listenTo(this.model, 'sync', this.render);
-        },
+    _editMapping : function() {
+        var view = new EditView({
+            model            : this.model,
+            targetCollection : this.model.collection
+        });
 
-        _editMapping: function() {
-            var view = new EditView({ model: this.model, targetCollection: this.model.collection});
-            AppLayout.modalRegion.show(view);
-        }
-    });
+        AppLayout.modalRegion.show(view);
+    }
 });

@@ -8,19 +8,6 @@ var paths = require('./paths.js');
 gulp.task('jshint', function () {
     return gulp.src([paths.src.scripts, paths.src.exclude.libs])
         .pipe(cache('jshint'))
-        .pipe(jshint({
-            '-W030': false,
-            '-W064': false,
-            '-W097': false,
-            '-W100': false,
-            'undef': true,
-            'globals': {
-                'require': true,
-                'define': true,
-                'window': true,
-                'document': true,
-                'console': true
-            }
-        }))
+        .pipe(jshint())
         .pipe(jshint.reporter(stylish));
 });

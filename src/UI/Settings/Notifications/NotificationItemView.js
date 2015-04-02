@@ -1,26 +1,24 @@
-﻿'use strict';
+var AppLayout = require('../../AppLayout');
+var Marionette = require('marionette');
+var EditView = require('./Edit/NotificationEditView');
 
-define([
-    'AppLayout',
-    'marionette',
-    'Settings/Notifications/Edit/NotificationEditView'
-], function (AppLayout, Marionette, EditView) {
+module.exports = Marionette.ItemView.extend({
+    template : 'Settings/Notifications/NotificationItemViewTemplate',
+    tagName  : 'li',
 
-    return Marionette.ItemView.extend({
-        template: 'Settings/Notifications/NotificationItemViewTemplate',
-        tagName : 'li',
+    events : {
+        'click' : '_edit'
+    },
 
-        events: {
-            'click'  : '_edit'
-        },
+    initialize : function() {
+        this.listenTo(this.model, 'sync', this.render);
+    },
 
-        initialize: function () {
-            this.listenTo(this.model, 'sync', this.render);
-        },
-
-        _edit: function () {
-            var view = new EditView({ model: this.model, targetCollection: this.model.collection});
-            AppLayout.modalRegion.show(view);
-        }
-    });
+    _edit : function() {
+        var view = new EditView({
+            model            : this.model,
+            targetCollection : this.model.collection
+        });
+        AppLayout.modalRegion.show(view);
+    }
 });

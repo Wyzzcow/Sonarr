@@ -1,27 +1,21 @@
-'use strict';
+var vent = require('vent');
+var NzbDroneCell = require('../../Cells/NzbDroneCell');
 
-define(
-    [
-        'vent',
-        'Cells/NzbDroneCell'
-    ], function (vent, NzbDroneCell) {
-        return NzbDroneCell.extend({
+module.exports = NzbDroneCell.extend({
+    className : 'history-details-cell',
 
-            className: 'history-details-cell',
+    events : {
+        'click' : '_showDetails'
+    },
 
-            events: {
-                'click': '_showDetails'
-            },
+    render : function() {
+        this.$el.empty();
+        this.$el.html('<i class="icon-sonarr-info"></i>');
 
-            render: function () {
-                this.$el.empty();
-                this.$el.html('<i class="icon-info-sign"></i>');
+        return this;
+    },
 
-                return this;
-            },
-
-            _showDetails: function () {
-                vent.trigger(vent.Commands.ShowHistoryDetails, { model: this.model });
-            }
-        });
-    });
+    _showDetails : function() {
+        vent.trigger(vent.Commands.ShowHistoryDetails, { model : this.model });
+    }
+});

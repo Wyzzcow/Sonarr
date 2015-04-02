@@ -17,7 +17,7 @@ namespace NzbDrone.Api.Frontend.Mappers
         private readonly IAnalyticsService _analyticsService;
         private readonly Func<ICacheBreakerProvider> _cacheBreakProviderFactory;
         private readonly string _indexPath;
-        private static readonly Regex ReplaceRegex = new Regex("(?<=(?:href|src|data-main)=\").*?(?=\")", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex ReplaceRegex = new Regex("(?<=(?:href|src)=\").*?(css|js)(?=\")", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static String API_KEY;
         private static String URL_BASE;
@@ -49,7 +49,7 @@ namespace NzbDrone.Api.Frontend.Mappers
 
         public override bool CanHandle(string resourceUrl)
         {
-            return !resourceUrl.Contains(".");
+            return !resourceUrl.Contains(".") && !resourceUrl.StartsWith("/login");
         }
 
         public override Response GetResponse(string resourceUrl)
@@ -94,7 +94,8 @@ namespace NzbDrone.Api.Frontend.Mappers
             text = text.Replace("APP_VERSION", BuildInfo.Version.ToString());
             text = text.Replace("APP_BRANCH", _configFileProvider.Branch.ToLower());
             text = text.Replace("APP_ANALYTICS", _analyticsService.IsEnabled.ToString().ToLowerInvariant());
-            text = text.Replace("URL_BASE", _configFileProvider.UrlBase);
+            text = text.Replace("URL_BASE", URL_BASE);
+            text = text.Replace("PRODUCTION", RuntimeInfoBase.IsProduction.ToString().ToLowerInvariant());
 
             _generatedContent = text;
 

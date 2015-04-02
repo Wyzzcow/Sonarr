@@ -1,154 +1,155 @@
-'use strict';
+module.exports = function() {
+    var Backgrid = this;
 
-define(
-    [
-        'backgrid'
-    ], function (Backgrid) {
+    Backgrid.SonarrHeaderCell = Backgrid.HeaderCell.extend({
+        events : {
+            'click' : 'onClick'
+        },
 
-        Backgrid.NzbDroneHeaderCell = Backgrid.HeaderCell.extend({
+        _originalInit : Backgrid.HeaderCell.prototype.initialize,
 
-            events: {
-                'click': 'onClick'
-            },
+        initialize : function(options) {
+            this._originalInit.call(this, options);
 
-            _originalInit: Backgrid.HeaderCell.prototype.initialize,
+            this.listenTo(this.collection, 'drone:sort', this.render);
+        },
 
-            initialize: function (options) {
-                this._originalInit.call(this, options);
+        render : function() {
+            this.$el.empty();
+            this.$el.append(this.column.get('label'));
+            if (this.column.get('tooltip')) {
+                this.$el.attr({
+                    'title'          : this.column.get('tooltip'),
+                    'data-container' : '.table'
+                });
+            }
 
-                this.listenTo(this.collection, 'drone:sort', this.render);
-            },
+            var column = this.column;
+            var sortable = Backgrid.callByNeed(column.sortable(), column, this.collection);
 
-            render: function () {
-                this.$el.empty();
-                this.$el.append(this.column.get('label'));
+            if (sortable) {
+                this.$el.addClass('sortable');
+                this.$el.prepend(' <i class="sort-direction-icon"></i>');
+            }
 
-                var column = this.column;
-                var sortable = Backgrid.callByNeed(column.sortable(), column, this.collection);
+            //Do we need this?
+            this.$el.addClass(column.get('name'));
 
-                if (sortable)
-                {
-                    this.$el.addClass('sortable');
-                    this.$el.append(' <i class="pull-right"></i>');
+            if (column.has('className')) {
+                this.$el.addClass(column.get('className'));
+            }
+
+            this.delegateEvents();
+            this.direction(column.get('direction'));
+
+            if (this.collection.state) {
+                var name = this._getSortMapping().name;
+                var order = this.collection.state.order;
+
+                if (name === column.get('name')) {
+                    this._setSortIcon(order);
+                } else {
+                    this._removeSortIcon();
+                }
+            }
+
+            return this;
+        },
+
+        direction : function(dir) {
+            this.$el.children('i.sort-direction-icon').removeClass('icon-sonarr-sort-asc icon-sonarr-sort-desc');
+
+            if (arguments.length) {
+                if (dir) {
+                    this._setSortIcon(dir);
                 }
 
-                //Do we need this?
-                this.$el.addClass(column.get('name'));
+                this.column.set('direction', dir);
+            }
 
-                if (column.has('className')) {
-                    this.$el.addClass(column.get('className'));
+            var columnDirection = this.column.get('direction');
+
+            if (!columnDirection && this.collection.state) {
+                var name = this._getSortMapping().name;
+                var order = this.collection.state.order;
+
+                if (name === this.column.get('name')) {
+                    columnDirection = order;
                 }
+            }
 
-                this.delegateEvents();
-                this.direction(column.get('direction'));
+            return columnDirection;
+        },
 
-                if (this.collection.state) {
-                    var name = this._getSortMapping().name;
-                    var order = this.collection.state.order;
+        _getSortMapping : function() {
+            var sortKey = this.collection.state.sortKey;
 
-                    if (name === column.get('name')) {
-                        this._setSortIcon(order);
-                    }
-                    else {
-                        this._removeSortIcon();
-                    }
-                }
+            if (this.collection._getSortMapping) {
+                return this.collection._getSortMapping(sortKey);
+            }
 
-                return this;
-            },
+            return {
+                name    : sortKey,
+                sortKey : sortKey
+            };
+        },
 
-            direction: function (dir) {
-                this.$el.children('i').removeClass('icon-sort-up icon-sort-down');
+        onClick : function(e) {
+            e.preventDefault();
 
-                if (arguments.length) {
-                    if (dir)
-                    {
-                        this._setSortIcon(dir);
-                    }
+            var collection = this.collection;
+            var event = 'backgrid:sort';
 
-                    this.column.set('direction', dir);
-                }
-
-                var columnDirection = this.column.get('direction');
-
-                if (!columnDirection && this.collection.state) {
-                    var name = this._getSortMapping().name;
-                    var order = this.collection.state.order;
-
-                    if (name === this.column.get('name')) {
-                        columnDirection = order;
-                    }
-                }
-
-                return columnDirection;
-            },
-
-            _getSortMapping: function() {
-                var sortKey = this.collection.state.sortKey;
-
-                if (this.collection._getSortMapping) {
-                    return this.collection._getSortMapping(sortKey);
-                }
-
-                return { name: sortKey, sortKey: sortKey };
-            },
-
-            onClick: function (e) {
-                e.preventDefault();
-
-                var collection = this.collection;
-                var event = 'backgrid:sort';
-
-                var column = this.column;
-                var sortable = Backgrid.callByNeed(column.sortable(), column, collection);
-                if (sortable) {
-                    var direction = collection.state.order;
+            var column = this.column;
+            var sortable = Backgrid.callByNeed(column.sortable(), column, collection);
+            if (sortable) {
+                var isSorted = this.$el.children('.icon-sonarr-sort-asc,.icon-sonarr-sort-desc').length !== 0;
+                var direction = collection.state.order;
+                if (column.get('sortType') === 'fixed' || !isSorted) {
+                    direction = column.get('direction') || 'ascending';
+                } else {
                     if (direction === 'ascending' || direction === -1) {
                         direction = 'descending';
-                    }
-                    else {
+                    } else {
                         direction = 'ascending';
                     }
-
-                    if (collection.setSorting) {
-                        collection.setSorting(column.get('name'), direction);
-                    }
-                    else {
-                        collection.state.sortKey = column.get('name');
-                        collection.state.order = direction;
-                    }
-                    collection.trigger(event, column, direction);
-                }
-            },
-
-            _resetCellDirection: function (columnToSort, direction) {
-                if (columnToSort !== this.column)
-                {
-                    this.direction(null);
-                }
-                else
-                {
-                    this.direction(direction);
-                }
-            },
-
-            _convertDirectionToIcon: function (dir) {
-                if (dir === 'ascending' || dir === -1) {
-                    return 'icon-sort-up';
                 }
 
-                return 'icon-sort-down';
-            },
-
-            _setSortIcon: function (dir) {
-                this._removeSortIcon();
-                this.$el.children('i').addClass(this._convertDirectionToIcon(dir));
-            },
-
-            _removeSortIcon: function () {
-                this.$el.children('i').removeClass('icon-sort-up icon-sort-down');
+                if (collection.setSorting) {
+                    collection.setSorting(column.get('name'), direction);
+                } else {
+                    collection.state.sortKey = column.get('name');
+                    collection.state.order = direction;
+                }
+                collection.trigger(event, column, direction);
             }
-        });
+        },
 
-        return Backgrid.NzbDroneHeaderCell;
+        _resetCellDirection : function(columnToSort, direction) {
+            if (columnToSort !== this.column) {
+                this.direction(null);
+            } else {
+                this.direction(direction);
+            }
+        },
+
+        _convertDirectionToIcon : function(dir) {
+            if (dir === 'ascending' || dir === -1) {
+                return 'icon-sonarr-sort-asc';
+            }
+
+            return 'icon-sonarr-sort-desc';
+        },
+
+        _setSortIcon : function(dir) {
+            this._removeSortIcon();
+            this.$el.children('i.sort-direction-icon').addClass(this._convertDirectionToIcon(dir));
+        },
+
+        _removeSortIcon : function() {
+            this.$el.children('i.sort-direction-icon').removeClass('icon-sonarr-sort-asc icon-sonarr-sort-desc');
+        }
     });
+
+    return Backgrid.SonarrHeaderCell;
+};

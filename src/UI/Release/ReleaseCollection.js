@@ -1,52 +1,56 @@
-﻿'use strict';
-define(
-    [
-        'backbone.pageable',
-        'Release/ReleaseModel',
-        'Mixins/AsSortedCollection'
-    ], function (PagableCollection, ReleaseModel, AsSortedCollection) {
-        var Collection = PagableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/release',
-            model: ReleaseModel,
+var PagableCollection = require('backbone.pageable');
+var ReleaseModel = require('./ReleaseModel');
+var AsSortedCollection = require('../Mixins/AsSortedCollection');
 
-            state: {
-                pageSize : 2000,
-                sortKey  : 'download',
-                order    : -1
-            },
+var Collection = PagableCollection.extend({
+    url   : window.NzbDrone.ApiRoot + '/release',
+    model : ReleaseModel,
 
-            mode: 'client',
-            
-            sortMappings: {
-                'quality'       : { sortKey: 'qualityWeight' },
-                'rejections'    : { sortValue: function (model) {
-                                        var rejections = model.get('rejections');
-                                        var releaseWeight = model.get('releaseWeight');
+    state : {
+        pageSize : 2000,
+        sortKey  : 'download',
+        order    : -1
+    },
 
-                                        if (rejections.length !== 0) {
-                                            return releaseWeight + 1000000;
-                                        }
+    mode : 'client',
 
-                                        return releaseWeight;
-                                    }
-                },
-                'download'      : { sortKey: 'releaseWeight' },
-                'seeders'       : { sortValue: function(model) {
-                                        var seeders = model.get('seeders') || 0;
-                                        var leechers = model.get('leechers') || 0;
-                                        
-                                        return seeders * 1000000 + leechers;
-                                    }
-                },
-                'age'           : { sortKey: 'ageMinutes' }
-            },
+    sortMappings : {
+        'quality'    : {
+            sortKey : 'qualityWeight'
+        },
+        'rejections' : {
+            sortValue : function(model) {
+                var rejections = model.get('rejections');
+                var releaseWeight = model.get('releaseWeight');
 
-            fetchEpisodeReleases: function (episodeId) {
-                return this.fetch({ data: { episodeId: episodeId }});
+                if (rejections.length !== 0) {
+                    return releaseWeight + 1000000;
+                }
+
+                return releaseWeight;
             }
-        });
-        
-        Collection = AsSortedCollection.call(Collection);
-        
-        return Collection;
-    });
+        },
+        'download'   : {
+            sortKey : 'releaseWeight'
+        },
+        'seeders'    : {
+            sortValue : function(model) {
+                var seeders = model.get('seeders') || 0;
+                var leechers = model.get('leechers') || 0;
+
+                return seeders * 1000000 + leechers;
+            }
+        },
+        'age'        : {
+            sortKey : 'ageMinutes'
+        }
+    },
+
+    fetchEpisodeReleases : function(episodeId) {
+        return this.fetch({ data : { episodeId : episodeId } });
+    }
+});
+
+Collection = AsSortedCollection.call(Collection);
+
+module.exports = Collection;

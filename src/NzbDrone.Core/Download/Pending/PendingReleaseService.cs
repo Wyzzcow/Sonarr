@@ -7,6 +7,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Indexers;
+using NzbDrone.Core.Jobs;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
@@ -38,6 +39,7 @@ namespace NzbDrone.Core.Download.Pending
         private readonly ISeriesService _seriesService;
         private readonly IParsingService _parsingService;
         private readonly IDelayProfileService _delayProfileService;
+        private readonly ITaskManager _taskManager;
         private readonly IConfigService _configService;
         private readonly IEventAggregator _eventAggregator;
         private readonly Logger _logger;
@@ -46,6 +48,7 @@ namespace NzbDrone.Core.Download.Pending
                                     ISeriesService seriesService,
                                     IParsingService parsingService,
                                     IDelayProfileService delayProfileService,
+                                    ITaskManager taskManager,
                                     IConfigService configService,
                                     IEventAggregator eventAggregator,
                                     Logger logger)
@@ -54,6 +57,7 @@ namespace NzbDrone.Core.Download.Pending
             _seriesService = seriesService;
             _parsingService = parsingService;
             _delayProfileService = delayProfileService;
+            _taskManager = taskManager;
             _configService = configService;
             _eventAggregator = eventAggregator;
             _logger = logger;
@@ -94,15 +98,26 @@ namespace NzbDrone.Core.Download.Pending
         {
             var queued = new List<Queue.Queue>();
 
+            var nextRssSync = new Lazy<DateTime>(() => _taskManager.GetNextExecution(typeof(RssSyncCommand)));
+
             foreach (var pendingRelease in GetPendingReleases())
             {
                 foreach (var episode in pendingRelease.RemoteEpisode.Episodes)
                 {
                     var ect = pendingRelease.Release.PublishDate.AddMinutes(GetDelay(pendingRelease.RemoteEpisode));
 
+                    if (ect < nextRssSync.Value)
+                    {
+                        ect = nextRssSync.Value;
+                    }
+                    else
+                    {
+                        ect = ect.AddMinutes(_configService.RssSyncInterval);
+                    }
+
                     var queue = new Queue.Queue
                                 {
-                                    Id = HashConverter.GetHashInt31(string.Format("pending-{0}-ep{1}", pendingRelease.Id, episode.Id)),
+                                    Id = GetQueueId(pendingRelease, episode),
                                     Series = pendingRelease.RemoteEpisode.Series,
                                     Episode = episode,
                                     Quality = pendingRelease.RemoteEpisode.ParsedEpisodeInfo.Quality,
@@ -112,13 +127,24 @@ namespace NzbDrone.Core.Download.Pending
                                     RemoteEpisode = pendingRelease.RemoteEpisode,
                                     Timeleft = ect.Subtract(DateTime.UtcNow),
                                     EstimatedCompletionTime = ect,
-                                    Status = "Pending"
+                                    Status = "Pending",
+                                    Protocol = pendingRelease.RemoteEpisode.Release.DownloadProtocol
                                 };
                     queued.Add(queue);
                 }
             }
 
-            return queued;
+            //Return best quality release for each episode
+            var deduped = queued.GroupBy(q => q.Episode.Id).Select(g =>
+            {
+                var series = g.First().Series;
+
+                return g.OrderByDescending(e => e.Quality, new QualityModelComparer(series.Profile))
+                        .ThenBy(q => PrioritizeDownloadProtocol(q.Series, q.Protocol))
+                        .First();
+            });
+
+            return deduped.ToList();
         }
 
         public Queue.Queue FindPendingQueueItem(int queueId)
@@ -264,7 +290,24 @@ namespace NzbDrone.Core.Download.Pending
 
         private int FindPendingReleaseId(int queueId)
         {
-            return GetPendingReleases().First(p => p.RemoteEpisode.Episodes.Any(e => queueId == (e.Id ^ (p.Id << 16)))).Id;
+            return GetPendingReleases().First(p => p.RemoteEpisode.Episodes.Any(e => queueId == GetQueueId(p, e))).Id;
+        }
+
+        private int GetQueueId(PendingRelease pendingRelease, Episode episode)
+        {
+            return HashConverter.GetHashInt31(String.Format("pending-{0}-ep{1}", pendingRelease.Id, episode.Id));
+        }
+
+        private int PrioritizeDownloadProtocol(Series series, DownloadProtocol downloadProtocol)
+        {
+            var delayProfile = _delayProfileService.BestForTags(series.Tags);
+
+            if (downloadProtocol == delayProfile.PreferredProtocol)
+            {
+                return 0;
+            }
+
+            return 1;
         }
 
         public void Handle(SeriesDeletedEvent message)

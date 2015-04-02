@@ -78,7 +78,7 @@ namespace NzbDrone.Core.Test.MediaFiles
             Subject.ProcessRootFolder(new DirectoryInfo(_droneFactory));
 
             Mocker.GetMock<IMakeImportDecision>()
-                .Verify(c => c.GetImportDecisions(It.IsAny<List<string>>(), It.IsAny<Series>(), It.IsAny<bool>(), It.IsAny<QualityModel>()),
+                .Verify(c => c.GetImportDecisions(It.IsAny<List<string>>(), It.IsAny<Series>(), It.IsAny<ParsedEpisodeInfo>(), It.IsAny<bool>()),
                     Times.Never());
 
             VerifyNoImport();
@@ -129,7 +129,7 @@ namespace NzbDrone.Core.Test.MediaFiles
             imported.Add(new ImportDecision(localEpisode));
 
             Mocker.GetMock<IMakeImportDecision>()
-                  .Setup(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), true, null))
+                  .Setup(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), null, true))
                   .Returns(imported);
 
             Mocker.GetMock<IImportApprovedEpisodes>()
@@ -155,14 +155,14 @@ namespace NzbDrone.Core.Test.MediaFiles
             imported.Add(new ImportDecision(localEpisode));
 
             Mocker.GetMock<IMakeImportDecision>()
-                  .Setup(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), true, null))
+                  .Setup(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), null, true))
                   .Returns(imported);
 
             Mocker.GetMock<IImportApprovedEpisodes>()
                   .Setup(s => s.Import(It.IsAny<List<ImportDecision>>(), true, null))
                   .Returns(imported.Select(i => new ImportResult(i)).ToList());
 
-            Mocker.GetMock<ISampleService>()
+            Mocker.GetMock<IDetectSample>()
                   .Setup(s => s.IsSample(It.IsAny<Series>(),
                       It.IsAny<QualityModel>(),
                       It.IsAny<String>(),
@@ -224,14 +224,14 @@ namespace NzbDrone.Core.Test.MediaFiles
             imported.Add(new ImportDecision(localEpisode));
 
             Mocker.GetMock<IMakeImportDecision>()
-                  .Setup(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), true, null))
+                  .Setup(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), null, true))
                   .Returns(imported);
 
             Mocker.GetMock<IImportApprovedEpisodes>()
                   .Setup(s => s.Import(It.IsAny<List<ImportDecision>>(), true, null))
                   .Returns(imported.Select(i => new ImportResult(i)).ToList());
 
-            Mocker.GetMock<ISampleService>()
+            Mocker.GetMock<IDetectSample>()
                   .Setup(s => s.IsSample(It.IsAny<Series>(),
                       It.IsAny<QualityModel>(),
                       It.IsAny<String>(),
@@ -253,6 +253,53 @@ namespace NzbDrone.Core.Test.MediaFiles
                   .Verify(v => v.DeleteFolder(It.IsAny<String>(), true), Times.Never());
 
             ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_use_folder_if_folder_import()
+        {
+            GivenValidSeries();
+
+            var folderName = @"C:\media\ba09030e-1234-1234-1234-123456789abc\[HorribleSubs] Maria the Virgin Witch - 09 [720p]".AsOsAgnostic();
+            var fileName = @"C:\media\ba09030e-1234-1234-1234-123456789abc\[HorribleSubs] Maria the Virgin Witch - 09 [720p]\[HorribleSubs] Maria the Virgin Witch - 09 [720p].mkv".AsOsAgnostic();
+
+            Mocker.GetMock<IDiskProvider>().Setup(c => c.FolderExists(folderName))
+                  .Returns(true);
+
+            Mocker.GetMock<IDiskProvider>().Setup(c => c.GetFiles(folderName, SearchOption.TopDirectoryOnly))
+                  .Returns(new[] { fileName });
+
+            var localEpisode = new LocalEpisode();
+
+            var imported = new List<ImportDecision>();
+            imported.Add(new ImportDecision(localEpisode));
+
+
+            var result = Subject.ProcessPath(fileName);
+
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Verify(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), It.Is<ParsedEpisodeInfo>(v => v.AbsoluteEpisodeNumbers.First() == 9), true), Times.Once());
+        }
+
+        [Test]
+        public void should_not_use_folder_if_file_import()
+        {
+            GivenValidSeries();
+
+            var fileName = @"C:\media\ba09030e-1234-1234-1234-123456789abc\Torrents\[HorribleSubs] Maria the Virgin Witch - 09 [720p].mkv".AsOsAgnostic();
+
+            Mocker.GetMock<IDiskProvider>().Setup(c => c.FolderExists(fileName))
+                  .Returns(false);
+
+            var localEpisode = new LocalEpisode();
+
+            var imported = new List<ImportDecision>();
+            imported.Add(new ImportDecision(localEpisode));
+
+            var result = Subject.ProcessPath(fileName);
+
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Verify(s => s.GetImportDecisions(It.IsAny<List<String>>(), It.IsAny<Series>(), null, true), Times.Once());
         }
 
         private void VerifyNoImport()

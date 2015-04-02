@@ -1,65 +1,60 @@
-﻿'use strict';
-define(
-    [
-        'marionette',
-        'jquery',
-        'Health/HealthView',
-        'Activity/Queue/QueueView',
-        'Navbar/Search'
-    ], function (Marionette, $, HealthView, QueueView) {
-        return Marionette.Layout.extend({
-            template: 'Navbar/NavbarLayoutTemplate',
+var Marionette = require('marionette');
+var $ = require('jquery');
+var HealthView = require('../Health/HealthView');
+var QueueView = require('../Activity/Queue/QueueView');
+require('./Search');
 
-            regions: {
-                health : '#x-health',
-                queue  : '#x-queue-count'
-            },
+module.exports = Marionette.Layout.extend({
+    template : 'Navbar/NavbarLayoutTemplate',
 
-            ui: {
-                search: '.x-series-search',
-                collapse: '.x-navbar-collapse'
-            },
+    regions : {
+        health : '#x-health',
+        queue  : '#x-queue-count'
+    },
 
-            events: {
-                'click a': 'onClick'
-            },
+    ui : {
+        search   : '.x-series-search',
+        collapse : '.x-navbar-collapse'
+    },
 
-            onRender: function () {
-                this.ui.search.bindSearch();
-                this.health.show(new HealthView());
-                this.queue.show(new QueueView());
-            },
+    events : {
+        'click a' : 'onClick'
+    },
 
-            onClick: function (event) {
+    onRender : function() {
+        this.ui.search.bindSearch();
+        this.health.show(new HealthView());
+        this.queue.show(new QueueView());
+    },
 
-                event.preventDefault();
+    onClick : function(event) {
 
-                var target = $(event.target);
+        event.preventDefault();
 
-                //look down for <a/>
-                var href = event.target.getAttribute('href');
+        var target = $(event.target);
 
-                //if couldn't find it look up'
-                if (!href && target.closest('a') && target.closest('a')[0]) {
+        //look down for <a/>
+        var href = event.target.getAttribute('href');
 
-                    var linkElement = target.closest('a')[0];
+        //if couldn't find it look up'
+        if (!href && target.closest('a') && target.closest('a')[0]) {
 
-                    href = linkElement.getAttribute('href');
-                    this.setActive(linkElement);
-                }
-                else {
-                    this.setActive(event.target);
-                }
+            var linkElement = target.closest('a')[0];
 
-                if ($(window).width() < 768) {
-                    this.ui.collapse.collapse('hide');
-                }
-            },
+            href = linkElement.getAttribute('href');
+            this.setActive(linkElement);
+        } else {
+            this.setActive(event.target);
+        }
 
-            setActive: function (element) {
-                //Todo: Set active on first load
-                this.$('a').removeClass('active');
-                $(element).addClass('active');
-            }
-        });
-    });
+        if ($(window).width() < 768) {
+            this.ui.collapse.collapse('hide');
+        }
+    },
+
+    setActive : function(element) {
+        //Todo: Set active on first load
+        this.$('a').removeClass('active');
+        $(element).addClass('active');
+    }
+});

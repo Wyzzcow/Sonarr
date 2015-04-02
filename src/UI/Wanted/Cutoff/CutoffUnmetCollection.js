@@ -1,60 +1,63 @@
-﻿'use strict';
-define(
-    [
-        'underscore',
-        'Series/EpisodeModel',
-        'backbone.pageable',
-        'Mixins/AsFilteredCollection',
-        'Mixins/AsSortedCollection',
-        'Mixins/AsPersistedStateCollection'
-    ], function (_, EpisodeModel, PagableCollection, AsFilteredCollection, AsSortedCollection, AsPersistedStateCollection) {
-        var Collection = PagableCollection.extend({
-            url  : window.NzbDrone.ApiRoot + '/wanted/cutoff',
-            model: EpisodeModel,
-            tableName: 'wanted.cutoff',
+var _ = require('underscore');
+var EpisodeModel = require('../../Series/EpisodeModel');
+var PagableCollection = require('backbone.pageable');
+var AsFilteredCollection = require('../../Mixins/AsFilteredCollection');
+var AsSortedCollection = require('../../Mixins/AsSortedCollection');
+var AsPersistedStateCollection = require('../../Mixins/AsPersistedStateCollection');
 
-            state: {
-                pageSize    : 15,
-                sortKey     : 'airDateUtc',
-                order       : 1
-            },
+var Collection = PagableCollection.extend({
+    url       : window.NzbDrone.ApiRoot + '/wanted/cutoff',
+    model     : EpisodeModel,
+    tableName : 'wanted.cutoff',
 
-            queryParams: {
-                totalPages  : null,
-                totalRecords: null,
-                pageSize    : 'pageSize',
-                sortKey     : 'sortKey',
-                order       : 'sortDir',
-                directions  : {
-                    '-1': 'asc',
-                    '1' : 'desc'
-                }
-            },
-            
-            // Filter Modes
-            filterModes: {
-                'monitored'   : ['monitored', 'true'],
-                'unmonitored' : ['monitored', 'false'],
-            },
+    state : {
+        pageSize : 15,
+        sortKey  : 'airDateUtc',
+        order    : 1
+    },
 
-            sortMappings: {
-                'series'   : { sortKey: 'series.sortTitle' }
-            },
+    queryParams : {
+        totalPages   : null,
+        totalRecords : null,
+        pageSize     : 'pageSize',
+        sortKey      : 'sortKey',
+        order        : 'sortDir',
+        directions   : {
+            '-1' : 'asc',
+            '1'  : 'desc'
+        }
+    },
 
-            parseState: function (resp) {
-                return {totalRecords: resp.totalRecords};
-            },
+    // Filter Modes
+    filterModes : {
+        'monitored'   : [
+            'monitored',
+            'true'
+        ],
+        'unmonitored' : [
+            'monitored',
+            'false'
+        ],
+    },
 
-            parseRecords: function (resp) {
-                if (resp) {
-                    return resp.records;
-                }
+    sortMappings : {
+        'series' : { sortKey : 'series.sortTitle' }
+    },
 
-                return resp;
-            }
-        });
+    parseState : function(resp) {
+        return { totalRecords : resp.totalRecords };
+    },
 
-        Collection = AsFilteredCollection.call(Collection);
-        Collection = AsSortedCollection.call(Collection);
-        return AsPersistedStateCollection.call(Collection);
-    });
+    parseRecords : function(resp) {
+        if (resp) {
+            return resp.records;
+        }
+
+        return resp;
+    }
+});
+
+Collection = AsFilteredCollection.call(Collection);
+Collection = AsSortedCollection.call(Collection);
+
+module.exports = AsPersistedStateCollection.call(Collection);

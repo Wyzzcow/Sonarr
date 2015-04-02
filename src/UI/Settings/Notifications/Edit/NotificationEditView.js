@@ -1,83 +1,72 @@
-﻿'use strict';
+var vent = require('vent');
+var Marionette = require('marionette');
+var DeleteView = require('../Delete/NotificationDeleteView');
+var AsModelBoundView = require('../../../Mixins/AsModelBoundView');
+var AsValidatedView = require('../../../Mixins/AsValidatedView');
+var AsEditModalView = require('../../../Mixins/AsEditModalView');
+require('../../../Form/FormBuilder');
+require('../../../Mixins/TagInput');
 
-define([
-    'underscore',
-    'vent',
-    'AppLayout',
-    'marionette',
-    'Settings/Notifications/Delete/NotificationDeleteView',
-    'Commands/CommandController',
-    'Mixins/AsModelBoundView',
-    'Mixins/AsValidatedView',
-    'Mixins/AsEditModalView',
-    'Form/FormBuilder',
-    'Mixins/TagInput'
-], function (_, vent, AppLayout, Marionette, DeleteView, CommandController, AsModelBoundView, AsValidatedView, AsEditModalView) {
+var view = Marionette.ItemView.extend({
+    template : 'Settings/Notifications/Edit/NotificationEditViewTemplate',
 
-    var view = Marionette.ItemView.extend({
-        template: 'Settings/Notifications/Edit/NotificationEditViewTemplate',
+    ui : {
+        onDownloadToggle : '.x-on-download',
+        onUpgradeSection : '.x-on-upgrade',
+        tags             : '.x-tags'
+    },
 
-        ui: {
-            onDownloadToggle : '.x-on-download',
-            onUpgradeSection : '.x-on-upgrade',
-            tags             : '.x-tags'
-        },
+    events : {
+        'click .x-back'         : '_back',
+        'change .x-on-download' : '_onDownloadChanged'
+    },
 
-        events: {
-            'click .x-back'        : '_back',
-            'change .x-on-download': '_onDownloadChanged'
-        },
+    _deleteView : DeleteView,
 
-        _deleteView: DeleteView,
+    initialize : function(options) {
+        this.targetCollection = options.targetCollection;
+    },
 
-        initialize: function (options) {
-            this.targetCollection = options.targetCollection;
-        },
+    onRender : function() {
+        this._onDownloadChanged();
+        this.ui.tags.tagInput({
+            model    : this.model,
+            property : 'tags'
+        });
+    },
 
-        onRender: function () {
-            this._onDownloadChanged();
+    _onAfterSave : function() {
+        this.targetCollection.add(this.model, { merge : true });
+        vent.trigger(vent.Commands.CloseModalCommand);
+    },
 
-            this.ui.tags.tagInput({
-                model    : this.model,
-                property : 'tags'
-            });
-        },
+    _onAfterSaveAndAdd : function() {
+        this.targetCollection.add(this.model, { merge : true });
 
-        _onAfterSave: function () {
-            this.targetCollection.add(this.model, { merge: true });
-            vent.trigger(vent.Commands.CloseModalCommand);
-        },
+        require('../Add/NotificationSchemaModal').open(this.targetCollection);
+    },
 
-        _onAfterSaveAndAdd: function () {
-            this.targetCollection.add(this.model, { merge: true });
-
-            require('Settings/Notifications/Add/NotificationSchemaModal').open(this.targetCollection);
-        },
-
-        _back: function () {
-            if (this.model.isNew()) {
-                this.model.destroy();
-            }
-
-            require('Settings/Notifications/Add/NotificationSchemaModal').open(this.targetCollection);
-        },
-
-        _onDownloadChanged: function () {
-            var checked = this.ui.onDownloadToggle.prop('checked');
-
-            if (checked) {
-                this.ui.onUpgradeSection.show();
-            }
-
-            else {
-                this.ui.onUpgradeSection.hide();
-            }
+    _back : function() {
+        if (this.model.isNew()) {
+            this.model.destroy();
         }
-    });
 
-    AsModelBoundView.call(view);
-    AsValidatedView.call(view);
-    AsEditModalView.call(view);
+        require('../Add/NotificationSchemaModal').open(this.targetCollection);
+    },
 
-    return view;
+    _onDownloadChanged : function() {
+        var checked = this.ui.onDownloadToggle.prop('checked');
+
+        if (checked) {
+            this.ui.onUpgradeSection.show();
+        } else {
+            this.ui.onUpgradeSection.hide();
+        }
+    }
 });
+
+AsModelBoundView.call(view);
+AsValidatedView.call(view);
+AsEditModalView.call(view);
+
+module.exports = view;

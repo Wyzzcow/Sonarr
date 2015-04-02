@@ -1,24 +1,19 @@
-'use strict';
-define(
-    [
-        'handlebars',
-        'underscore'
-    ], function (Handlebars, _) {
-        Handlebars.registerHelper('allowedLabeler', function () {
-            var ret = '';
-            var cutoff = this.cutoff;
+var Handlebars = require('handlebars');
+var _ = require('underscore');
 
-            _.each(this.items, function (item) {
-                if (item.allowed) {
-                    if (item.quality.id === cutoff.id) {
-                        ret += '<li><span class="label label-info" title="Cutoff">' + item.quality.name + '</span></li>';
-                    }
-                    else {
-                        ret += '<li><span class="label label-default">' + item.quality.name + '</span></li>';
-                    }
-                }
-            });
+Handlebars.registerHelper('allowedLabeler', function() {
+    var ret = '';
+    var cutoff = this.cutoff;
 
-            return new Handlebars.SafeString(ret);
-        });
+    _.each(this.items, function(item) {
+        if (item.allowed) {
+            if (item.quality.id === cutoff.id) {
+                ret += '<li><span class="label label-info" title="Cutoff">' + item.quality.name + '</span></li>';
+            } else {
+                ret += '<li><span class="label label-default">' + item.quality.name + '</span></li>';
+            }
+        }
     });
+
+    return new Handlebars.SafeString(ret);
+});

@@ -39,13 +39,15 @@ namespace NzbDrone.Api.Indexers
         public String DownloadUrl { get; set; }
         public String InfoUrl { get; set; }
         public Boolean DownloadAllowed { get; set; }
-        public DownloadProtocol DownloadProtocol { get; set; }
         public Int32 ReleaseWeight { get; set; }
 
 
         public int? Seeders { get; set; }
         public int? Leechers { get; set; }
         public DownloadProtocol Protocol { get; set; }
+
+        //TODO: besides a test I don't think this is used...
+        public DownloadProtocol DownloadProtocol { get; set; }
 
         public Boolean IsDaily { get; set; }
         public Boolean IsAbsoluteNumbering { get; set; }

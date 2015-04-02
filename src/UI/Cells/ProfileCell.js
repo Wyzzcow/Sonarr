@@ -1,25 +1,29 @@
-'use strict';
-define(
-    [
-        'backgrid',
-        'Profile/ProfileCollection',
-        'underscore'
-    ], function (Backgrid, ProfileCollection,_) {
-        return Backgrid.Cell.extend({
-            className: 'profile-cell',
+var Backgrid = require('backgrid');
+var ProfileCollection = require('../Profile/ProfileCollection');
+var _ = require('underscore');
 
-            render: function () {
+module.exports = Backgrid.Cell.extend({
+    className : 'profile-cell',
 
-                this.$el.empty();
-                var profileId = this.model.get(this.column.get('name'));
+    _originalInit : Backgrid.Cell.prototype.initialize,
 
-                var profile = _.findWhere(ProfileCollection.models, { id: profileId });
+    initialize : function () {
+        this._originalInit.apply(this, arguments);
 
-                if (profile) {
-                    this.$el.html(profile.get('name'));
-                }
+        this.listenTo(ProfileCollection, 'sync', this.render);
+    },
 
-                return this;
-            }
-        });
-    });
+    render : function() {
+
+        this.$el.empty();
+        var profileId = this.model.get(this.column.get('name'));
+
+        var profile = _.findWhere(ProfileCollection.models, { id : profileId });
+
+        if (profile) {
+            this.$el.html(profile.get('name'));
+        }
+
+        return this;
+    }
+});

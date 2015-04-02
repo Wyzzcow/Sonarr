@@ -5,6 +5,7 @@ using NzbDrone.Core.Qualities;
 using NzbDrone.Api.Series;
 using NzbDrone.Api.Episodes;
 using NzbDrone.Core.Download.TrackedDownloads;
+using NzbDrone.Core.Indexers;
 
 namespace NzbDrone.Api.Queue
 {
@@ -21,6 +22,7 @@ namespace NzbDrone.Api.Queue
         public String Status { get; set; }
         public String TrackedDownloadStatus { get; set; }
         public List<TrackedDownloadStatusMessage> StatusMessages { get; set; }
-        public String TrackingId { get; set; }
+        public String DownloadId { get; set; }
+        public DownloadProtocol Protocol { get; set; }
     }
 }

@@ -1,11 +1,5 @@
-'use strict';
-define(
-    [
-        'marionette'
-    ], function (Marionette) {
+var Marionette = require('marionette');
 
-        return Marionette.ItemView.extend({
-            template: 'Episode/Activity/NoActivityViewTemplate'
-        });
-
-    });
+module.exports = Marionette.ItemView.extend({
+    template : 'Episode/Activity/NoActivityViewTemplate'
+});

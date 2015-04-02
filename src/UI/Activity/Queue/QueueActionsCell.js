@@ -1,93 +1,66 @@
 'use strict';
 
-define(
-    [
-        'jquery',
-        'marionette',
-        'Cells/NzbDroneCell'
-    ], function ($, Marionette, NzbDroneCell) {
-        return NzbDroneCell.extend({
+var $ = require('jquery');
+var vent = require('../../vent');
+var TemplatedCell = require('../../Cells/TemplatedCell');
+var RemoveFromQueueView = require('./RemoveFromQueueView');
 
-            className : 'queue-actions-cell',
+module.exports = TemplatedCell.extend({
 
-            events: {
-                'click .x-remove' : '_remove',
-                'click .x-import' : '_import',
-                'click .x-grab'   : '_grab'
-            },
+    template  : 'Activity/Queue/QueueActionsCellTemplate',
+    className : 'queue-actions-cell',
 
-            render: function () {
-                this.$el.empty();
+    events : {
+        'click .x-remove' : '_remove',
+        'click .x-import' : '_import',
+        'click .x-grab'   : '_grab'
+    },
 
-                if (this.cellValue) {
-                    var status = this.cellValue.get('status').toLowerCase();
-                    var trackedDownloadStatus = this.cellValue.has('trackedDownloadStatus') ? this.cellValue.get('trackedDownloadStatus').toLowerCase() : 'ok';
-                    var icon = '';
-                    var title = '';
+    ui : {
+        import : '.x-import',
+        grab   : '.x-grab'
+    },
 
-                    if (status === 'completed' && trackedDownloadStatus === 'warning') {
-                        icon = 'icon-inbox x-import';
-                        title = 'Force import';
-                    }
+    _remove : function() {
+        var showBlacklist = this.model.get('status') !== 'Pending';
 
-                    if (status === 'pending') {
-                        icon = 'icon-download-alt x-grab';
-                        title = 'Add to download queue (Override Delay Profile)';
-                    }
+        vent.trigger(vent.Commands.OpenModalCommand, new RemoveFromQueueView({
+            model         : this.model,
+            showBlacklist : showBlacklist
+        }));
+    },
 
-                    //TODO: Show manual import if its completed or option to blacklist
-                    //if (trackedDownloadStatus === 'error') {
-                    //    if (status === 'completed') {
-                    //        icon = 'icon-nd-import-failed';
-                    //        title = 'Import failed: ' + itemTitle;
-                    //    }
-                    //TODO: What do we show when waiting for retry to take place?
+    _import : function() {
+        var self = this;
 
-                    //    else {
-                    //        icon = 'icon-nd-download-failed';
-                    //        title = 'Download failed';
-                    //    }
-                    //}
-
-                    this.$el.html('<i class="{0}" title="{1}"></i>'.format(icon, title) +
-                    '<i class="icon-nd-delete x-remove" title="Remove from Download Client"></i>');
-                }
-
-                return this;
-            },
-
-            _remove : function () {
-                this.model.destroy();
-            },
-
-            _import : function () {
-                var self = this;
-
-                var promise = $.ajax({
-                    url: window.NzbDrone.ApiRoot + '/queue/import',
-                    type: 'POST',
-                    data: JSON.stringify(this.model.toJSON())
-                });
-
-                promise.success(function () {
-                    //find models that have the same series id and episode ids and remove them
-                    self.model.trigger('destroy', self.model);
-                });
-            },
-
-            _grab : function () {
-                var self = this;
-
-                var promise = $.ajax({
-                    url: window.NzbDrone.ApiRoot + '/queue/grab',
-                    type: 'POST',
-                    data: JSON.stringify(this.model.toJSON())
-                });
-
-                promise.success(function () {
-                    //find models that have the same series id and episode ids and remove them
-                    self.model.trigger('destroy', self.model);
-                });
-            }
+        var promise = $.ajax({
+            url  : window.NzbDrone.ApiRoot + '/queue/import',
+            type : 'POST',
+            data : JSON.stringify(this.model.toJSON())
         });
-    });
+
+        this.$(this.ui.import).spinForPromise(promise);
+
+        promise.success(function() {
+            //find models that have the same series id and episode ids and remove them
+            self.model.trigger('destroy', self.model);
+        });
+    },
+
+    _grab : function() {
+        var self = this;
+
+        var promise = $.ajax({
+            url  : window.NzbDrone.ApiRoot + '/queue/grab',
+            type : 'POST',
+            data : JSON.stringify(this.model.toJSON())
+        });
+
+        this.$(this.ui.grab).spinForPromise(promise);
+
+        promise.success(function() {
+            //find models that have the same series id and episode ids and remove them
+            self.model.trigger('destroy', self.model);
+        });
+    }
+});
